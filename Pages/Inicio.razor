@@ -1,0 +1,29 @@
+@page "/"
+@using CalificacionXPuntosWeb.Services
+@inject NavigationManager NavigationManager
+
+<PageTitle>Inicio - Puntos por Ideas</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-body text-center p-5">
+                    <h1 class="display-4 mb-4">Consulta tu Idea</h1>
+                    <p class="lead mb-4">Ingresa tu número de documento para consultar tus ideas registradas y puntos acumulados.</p>
+                    <button class="btn btn-primary btn-lg" @onclick="IrAConsultarDocumento">
+                        <i class="bi bi-search"></i> Consultar Ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void IrAConsultarDocumento()
+    {
+        NavigationManager.NavigateTo("/consultar-documento");
+    }
+}
+

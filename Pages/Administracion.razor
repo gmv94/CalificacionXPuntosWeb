@@ -1,0 +1,1520 @@
+@page "/administracion"
+@inherits AuthComponentBase
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@inject CategoriaBDService CategoriaBDService
+@inject EstadoBDService EstadoBDService
+@inject ProcesoBDService ProcesoBDService
+@inject IdeaService IdeaService
+@inject PuntosHistoricosService PuntosHistoricosService
+@inject ValorPuntosService ValorPuntosService
+@inject AuthService AuthServiceAdmin
+@inject LogService LogService
+
+<PageTitle>Administración</PageTitle>
+
+<h3>Administración</h3>
+
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "categorias" ? "active" : "")" @onclick='() => CambiarTab("categorias")'>
+                    Categorías
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "estados" ? "active" : "")" @onclick='() => CambiarTab("estados")'>
+                    Estados
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "procesos" ? "active" : "")" @onclick='() => CambiarTab("procesos")'>
+                    Procesos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "puntos-historicos" ? "active" : "")" @onclick='() => CambiarTab("puntos-historicos")'>
+                    Puntos Históricos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "valor-puntos" ? "active" : "")" @onclick='() => CambiarTab("valor-puntos")'>
+                    Valor Puntos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "usuarios" ? "active" : "")" @onclick='() => CambiarTab("usuarios")'>
+                    Gestión de Usuarios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "logs" ? "active" : "")" @onclick='() => CambiarTab("logs")'>
+                    Logs
+                </button>
+            </li>
+        </ul>
+
+        @if (tabActivo == "categorias")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Categorías</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevaCategoria">
+                        <i class="bi bi-plus-circle"></i> Nueva Categoría
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (categorias.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Impactos</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cat in categorias)
+                                {
+                                    <tr>
+                                        <td>@cat.Nombre</td>
+                                        <td>@(cat.Impactos?.Count(i => i.Activo) ?? 0) impacto(s)</td>
+                                        <td>@(cat.Activo ? "Activo" : "Inactivo")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarCategoria(cat)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarCategoria(cat.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay categorías registradas.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "estados")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Estados</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevoEstado">
+                        <i class="bi bi-plus-circle"></i> Nuevo Estado
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (estados.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var est in estados)
+                                {
+                                    <tr>
+                                        <td>@est.Nombre</td>
+                                        <td>@(est.Activo ? "Activo" : "Inactivo")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarEstado(est)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarEstado(est.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay estados registrados.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "procesos")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Procesos</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevoProceso">
+                        <i class="bi bi-plus-circle"></i> Nuevo Proceso
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (procesos.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var proc in procesos)
+                                {
+                                    <tr>
+                                        <td>@proc.Nombre</td>
+                                        <td>@(proc.Activo ? "Activo" : "Inactivo")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarProceso(proc)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarProceso(proc.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay procesos registrados.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "puntos-historicos")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Puntos Históricos</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevoPuntosHistoricos">
+                        <i class="bi bi-plus-circle"></i> Asignar Puntos Históricos
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="buscarUsuario" class="form-label">Buscar Usuario:</label>
+                        <input type="text" 
+                               id="buscarUsuario" 
+                               class="form-control" 
+                               value="@nombreUsuarioBuscar"
+                               @oninput="BuscarUsuarios"
+                               placeholder="Escriba el nombre del usuario..." />
+                        @if (usuariosSugeridos != null && usuariosSugeridos.Any() && !string.IsNullOrEmpty(nombreUsuarioBuscar) && puntosHistoricosNuevos.NombreUsuario != nombreUsuarioBuscar)
+                        {
+                            <div class="list-group mt-1" style="position: relative; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                @foreach (var usuario in usuariosSugeridos.Take(10))
+                                {
+                                    <button type="button" 
+                                            class="list-group-item list-group-item-action" 
+                                            @onclick="() => SeleccionarUsuario(usuario)">
+                                        @usuario
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(puntosHistoricosNuevos.NombreUsuario))
+                    {
+                        <div class="alert alert-info mb-3">
+                            <strong>Usuario seleccionado:</strong> @puntosHistoricosNuevos.NombreUsuario
+                            @if (!string.IsNullOrWhiteSpace(puntosHistoricosNuevos.NumeroDocumento))
+                            {
+                                <br /><strong>Documento:</strong> @puntosHistoricosNuevos.NumeroDocumento
+                            }
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label for="puntosAsignar" class="form-label">Puntos a Asignar:</label>
+                        <InputNumber id="puntosAsignar" class="form-control" @bind-Value="puntosHistoricosNuevos.Puntos" min="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesPuntos" class="form-label">Observaciones:</label>
+                        <InputTextArea id="observacionesPuntos" class="form-control" rows="3" @bind-Value="puntosHistoricosNuevos.Observaciones" maxlength="1000" />
+                    </div>
+                    <button class="btn btn-success" @onclick="GuardarPuntosHistoricos" disabled="@(string.IsNullOrWhiteSpace(puntosHistoricosNuevos.NombreUsuario) || puntosHistoricosNuevos.Puntos <= 0)">
+                        <i class="bi bi-save"></i> Guardar Puntos Históricos
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "valor-puntos")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Valor Puntos</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevoValorPuntos">
+                        <i class="bi bi-plus-circle"></i> Nuevo Valor Puntos
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Total de registros: @valoresPuntos.Count</p>
+                    @if (valoresPuntos != null && valoresPuntos.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Costo Mínimo</th>
+                                    <th>Costo Máximo</th>
+                                    <th>Valor por Punto</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var vp in valoresPuntos)
+                                {
+                                    <tr>
+                                        <td>@vp.Id</td>
+                                        <td>$@vp.CostoMinimo.ToString("N0")</td>
+                                        <td>$@vp.CostoMaximo.ToString("N0")</td>
+                                        <td>$@vp.ValorPorPunto.ToString("N0")</td>
+                                        <td>@(vp.Activo ? "Activo" : "Inactivo")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarValorPuntos(vp)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarValorPuntos(vp.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay valores de puntos registrados. Haga clic en "Nuevo Valor Puntos" para agregar uno.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "logs")
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h5>Logs del Sistema</h5>
+                </div>
+                <div class="card-body">
+                    @if (logs.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Entidad</th>
+                                        <th>Usuario</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in logs)
+                                    {
+                                        <tr>
+                                            <td>@log.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                            <td><span class="badge bg-@(log.Tipo == "Login" ? "success" : log.Tipo == "Delete" ? "danger" : "primary")">@log.Tipo</span></td>
+                                            <td>@log.Entidad</td>
+                                            <td>@log.Usuario</td>
+                                            <td>@log.Descripcion</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No hay logs registrados.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "usuarios")
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h5>Gestión de Usuarios</h5>
+                </div>
+                <div class="card-body">
+                    @if (usuarios.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Último Acceso</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var usuario in usuarios)
+                                {
+                                    <tr>
+                                        <td>@usuario.Id</td>
+                                        <td>@usuario.NombreUsuario</td>
+                                        <td>@usuario.Rol</td>
+                                        <td>@(usuario.Activo ? "Activo" : "Bloqueado")</td>
+                                        <td>@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                        <td>@(usuario.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarUsuario(usuario)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" @onclick="() => CambiarContrasenaUsuario(usuario.Id)">
+                                                <i class="bi bi-key"></i> Cambiar Contraseña
+                                            </button>
+                                            <button class="btn btn-sm @(usuario.Activo ? "btn-secondary" : "btn-success")" @onclick="() => BloquearDesbloquearUsuario(usuario.Id, !usuario.Activo)">
+                                                <i class="bi bi-@(usuario.Activo ? "lock" : "unlock")"></i> @(usuario.Activo ? "Bloquear" : "Desbloquear")
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarUsuario(usuario.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay usuarios registrados.</p>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal para Categoría -->
+@if (mostrarModalCategoria)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(categoriaEditando?.Id > 0 ? "Editar" : "Nueva") Categoría</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalCategoria"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <InputText class="form-control" @bind-Value="categoriaEditando!.Nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activo:</label>
+                        <InputCheckbox @bind-Value="categoriaEditando.Activo" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Impactos:</label>
+                        <button class="btn btn-sm btn-success mb-2" @onclick="AgregarImpacto">
+                            <i class="bi bi-plus"></i> Agregar Impacto
+                        </button>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Porcentaje Máximo</th>
+                                    <th>Orden</th>
+                                    <th>Activo</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < categoriaEditando.Impactos.Count; i++)
+                                {
+                                    var idx = i;
+                                    <tr>
+                                        <td>
+                                            <InputText class="form-control form-control-sm" @bind-Value="categoriaEditando.Impactos[idx].Nombre" />
+                                        </td>
+                                        <td>
+                                            <InputNumber class="form-control form-control-sm" @bind-Value="categoriaEditando.Impactos[idx].PorcentajeMaximo" min="0" max="100" />
+                                        </td>
+                                        <td>
+                                            <InputNumber class="form-control form-control-sm" @bind-Value="categoriaEditando.Impactos[idx].Orden" min="0" />
+                                        </td>
+                                        <td>
+                                            <InputCheckbox @bind-Value="categoriaEditando.Impactos[idx].Activo" />
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => RemoverImpacto(idx)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalCategoria">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarCategoria">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal para Estado -->
+@if (mostrarModalEstado)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(estadoEditando?.Id > 0 ? "Editar" : "Nuevo") Estado</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalEstado"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <InputText class="form-control" @bind-Value="estadoEditando!.Nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activo:</label>
+                        <InputCheckbox @bind-Value="estadoEditando.Activo" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalEstado">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarEstado">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal para Proceso -->
+@if (mostrarModalProceso)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(procesoEditando?.Id > 0 ? "Editar" : "Nuevo") Proceso</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalProceso"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <InputText class="form-control" @bind-Value="procesoEditando!.Nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activo:</label>
+                        <InputCheckbox @bind-Value="procesoEditando.Activo" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalProceso">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarProceso">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal para Valor Puntos -->
+@if (mostrarModalValorPuntos)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(valorPuntosEditando?.Id > 0 ? "Editar" : "Nuevo") Valor Puntos</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalValorPuntos"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Costo Mínimo:</label>
+                        <InputNumber class="form-control" @bind-Value="valorPuntosEditando!.CostoMinimo" min="0" step="0.01" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Costo Máximo:</label>
+                        <InputNumber class="form-control" @bind-Value="valorPuntosEditando!.CostoMaximo" min="0" step="0.01" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor por Punto:</label>
+                        <InputNumber class="form-control" @bind-Value="valorPuntosEditando!.ValorPorPunto" min="0" step="0.01" />
+                        <small class="text-muted">Ejemplo: Si el valor por punto es $100, entonces $1000 de costo = 10 puntos requeridos</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activo:</label>
+                        <InputCheckbox @bind-Value="valorPuntosEditando.Activo" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalValorPuntos">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarValorPuntos">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal para Usuario -->
+@if (mostrarModalUsuario)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuario</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalUsuario"></button>
+                </div>
+                <div class="modal-body">
+                    @if (usuarioEditando != null)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Usuario:</label>
+                            <InputText class="form-control" @bind-Value="usuarioEditando.NombreUsuario" disabled />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol:</label>
+                            <InputSelect class="form-select" @bind-Value="usuarioEditando.Rol">
+                                <option value="SuperAdmin">SuperAdmin</option>
+                                <option value="Usuario">Usuario</option>
+                            </InputSelect>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalUsuario">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarUsuario">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal para Cambiar Contraseña -->
+@if (mostrarModalCambiarContrasena)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Contraseña - @nombreUsuarioCambiarContrasena</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalCambiarContrasena"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Contraseña:</label>
+                        <InputText type="password" class="form-control" @bind-Value="nuevaContrasena" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar Contraseña:</label>
+                        <InputText type="password" class="form-control" @bind-Value="confirmarContrasena" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalCambiarContrasena">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarCambiarContrasena">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-@(esExito ? "success" : "danger") alert-dismissible fade show mt-3" role="alert">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+    </div>
+}
+
+@code {
+    private string tabActivo = "categorias";
+    private List<CategoriaBD> categorias = new();
+    private List<EstadoBD> estados = new();
+    private List<ProcesoBD> procesos = new();
+    private List<ValorPuntos> valoresPuntos = new();
+    private List<Usuario> usuarios = new();
+    private List<Log> logs = new();
+    
+    private bool mostrarModalCategoria = false;
+    private bool mostrarModalEstado = false;
+    private bool mostrarModalProceso = false;
+    private bool mostrarModalValorPuntos = false;
+    private bool mostrarModalUsuario = false;
+    private bool mostrarModalCambiarContrasena = false;
+    
+    private CategoriaBD categoriaEditando = new();
+    private EstadoBD estadoEditando = new();
+    private ProcesoBD procesoEditando = new();
+    private ValorPuntos valorPuntosEditando = new();
+    private Usuario? usuarioEditando = null;
+    private int usuarioIdCambiarContrasena = 0;
+    private string nombreUsuarioCambiarContrasena = string.Empty;
+    private string nuevaContrasena = string.Empty;
+    private string confirmarContrasena = string.Empty;
+    
+    private string mensaje = string.Empty;
+    private bool esExito = false;
+
+    // Puntos Históricos
+    private string nombreUsuarioBuscar = string.Empty;
+    private List<string> usuariosSugeridos = new();
+    private List<string> todosLosUsuarios = new();
+    private PuntosHistoricos puntosHistoricosNuevos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RequiereSuperAdmin();
+        CargarDatos();
+        CargarUsuarios();
+        CargarListaUsuarios();
+        CargarLogs();
+    }
+
+    private void CargarListaUsuarios()
+    {
+        try
+        {
+            usuarios = AuthServiceAdmin.GetAllUsuarios();
+        }
+        catch
+        {
+            usuarios = new List<Usuario>();
+        }
+    }
+
+    private void CargarLogs()
+    {
+        try
+        {
+            logs = LogService.GetAllLogs();
+        }
+        catch
+        {
+            logs = new List<Log>();
+        }
+    }
+
+    private void CargarUsuarios()
+    {
+        try
+        {
+            var ideas = IdeaService.GetAllIdeas();
+            todosLosUsuarios = ideas
+                .Where(i => !string.IsNullOrWhiteSpace(i.NombreUsuario))
+                .Select(i => i.NombreUsuario)
+                .Distinct()
+                .OrderBy(u => u)
+                .ToList();
+        }
+        catch
+        {
+            todosLosUsuarios = new List<string>();
+        }
+    }
+
+    private void CambiarTab(string tab)
+    {
+        tabActivo = tab;
+        CargarDatos();
+    }
+
+    private void CargarDatos()
+    {
+        try
+        {
+            categorias = CategoriaBDService.GetAllCategorias();
+            estados = EstadoBDService.GetAllEstados();
+            procesos = ProcesoBDService.GetAllProcesos();
+            valoresPuntos = ValorPuntosService.GetAllValorPuntos() ?? new List<ValorPuntos>();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al cargar los datos: {ex.Message}";
+            esExito = false;
+            valoresPuntos = new List<ValorPuntos>();
+        }
+    }
+
+    // Categorías
+    private void NuevaCategoria()
+    {
+        categoriaEditando = new CategoriaBD { Impactos = new List<ImpactoBD>() };
+        mostrarModalCategoria = true;
+    }
+
+    private void EditarCategoria(CategoriaBD categoria)
+    {
+        var categoriaCompleta = CategoriaBDService.GetCategoriaById(categoria.Id);
+        if (categoriaCompleta != null)
+        {
+            categoriaEditando = new CategoriaBD
+            {
+                Id = categoriaCompleta.Id,
+                Nombre = categoriaCompleta.Nombre,
+                Activo = categoriaCompleta.Activo,
+                Impactos = categoriaCompleta.Impactos.Select(i => new ImpactoBD
+                {
+                    Id = i.Id,
+                    Nombre = i.Nombre,
+                    PorcentajeMaximo = i.PorcentajeMaximo,
+                    Orden = i.Orden,
+                    Activo = i.Activo
+                }).ToList()
+            };
+            mostrarModalCategoria = true;
+        }
+    }
+
+    private void CerrarModalCategoria()
+    {
+        mostrarModalCategoria = false;
+        categoriaEditando = new CategoriaBD();
+    }
+
+    private void AgregarImpacto()
+    {
+        categoriaEditando.Impactos.Add(new ImpactoBD
+        {
+            Orden = categoriaEditando.Impactos.Count + 1,
+            Activo = true
+        });
+    }
+
+    private void RemoverImpacto(int indice)
+    {
+        categoriaEditando.Impactos.RemoveAt(indice);
+    }
+
+    private void GuardarCategoria()
+    {
+        if (string.IsNullOrWhiteSpace(categoriaEditando.Nombre))
+        {
+            mensaje = "El nombre de la categoría es requerido.";
+            esExito = false;
+            return;
+        }
+
+        try
+        {
+            if (categoriaEditando.Id > 0)
+            {
+                CategoriaBDService.UpdateCategoria(categoriaEditando);
+                LogService.RegistrarLog("Update", "Categoria", categoriaEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Categoría actualizada - Nombre: {categoriaEditando.Nombre}");
+                mensaje = "Categoría actualizada exitosamente.";
+            }
+            else
+            {
+                CategoriaBDService.AddCategoria(categoriaEditando);
+                LogService.RegistrarLog("Create", "Categoria", categoriaEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Categoría creada - Nombre: {categoriaEditando.Nombre}");
+                mensaje = "Categoría creada exitosamente.";
+            }
+            esExito = true;
+            CerrarModalCategoria();
+            CargarDatos();
+            CargarLogs();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al guardar: {ex.Message}";
+            esExito = false;
+        }
+    }
+
+    private async Task EliminarCategoria(int id)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar esta categoría?");
+        if (confirmado)
+        {
+            try
+            {
+                CategoriaBDService.DeleteCategoria(id);
+                mensaje = "Categoría eliminada exitosamente.";
+                esExito = true;
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error al eliminar: {ex.Message}";
+                esExito = false;
+            }
+        }
+    }
+
+    // Estados
+    private void NuevoEstado()
+    {
+        estadoEditando = new EstadoBD();
+        mostrarModalEstado = true;
+    }
+
+    private void EditarEstado(EstadoBD estado)
+    {
+        estadoEditando = new EstadoBD
+        {
+            Id = estado.Id,
+            Nombre = estado.Nombre,
+            Activo = estado.Activo
+        };
+        mostrarModalEstado = true;
+    }
+
+    private void CerrarModalEstado()
+    {
+        mostrarModalEstado = false;
+        estadoEditando = new EstadoBD();
+    }
+
+    private void GuardarEstado()
+    {
+        if (string.IsNullOrWhiteSpace(estadoEditando.Nombre))
+        {
+            mensaje = "El nombre del estado es requerido.";
+            esExito = false;
+            return;
+        }
+
+        try
+        {
+            if (estadoEditando.Id > 0)
+            {
+                EstadoBDService.UpdateEstado(estadoEditando);
+                LogService.RegistrarLog("Update", "Estado", estadoEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Estado actualizado - Nombre: {estadoEditando.Nombre}");
+                mensaje = "Estado actualizado exitosamente.";
+            }
+            else
+            {
+                EstadoBDService.AddEstado(estadoEditando);
+                LogService.RegistrarLog("Create", "Estado", estadoEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Estado creado - Nombre: {estadoEditando.Nombre}");
+                mensaje = "Estado creado exitosamente.";
+            }
+            esExito = true;
+            CerrarModalEstado();
+            CargarDatos();
+            CargarLogs();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al guardar: {ex.Message}";
+            esExito = false;
+        }
+    }
+
+    private async Task EliminarEstado(int id)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar este estado?");
+        if (confirmado)
+        {
+            try
+            {
+                EstadoBDService.DeleteEstado(id);
+                mensaje = "Estado eliminado exitosamente.";
+                esExito = true;
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error al eliminar: {ex.Message}";
+                esExito = false;
+            }
+        }
+    }
+
+    // Procesos
+    private void NuevoProceso()
+    {
+        procesoEditando = new ProcesoBD();
+        mostrarModalProceso = true;
+    }
+
+    private void EditarProceso(ProcesoBD proceso)
+    {
+        procesoEditando = new ProcesoBD
+        {
+            Id = proceso.Id,
+            Nombre = proceso.Nombre,
+            Activo = proceso.Activo
+        };
+        mostrarModalProceso = true;
+    }
+
+    private void CerrarModalProceso()
+    {
+        mostrarModalProceso = false;
+        procesoEditando = new ProcesoBD();
+    }
+
+    private void GuardarProceso()
+    {
+        if (string.IsNullOrWhiteSpace(procesoEditando.Nombre))
+        {
+            mensaje = "El nombre del proceso es requerido.";
+            esExito = false;
+            return;
+        }
+
+        try
+        {
+            if (procesoEditando.Id > 0)
+            {
+                ProcesoBDService.UpdateProceso(procesoEditando);
+                LogService.RegistrarLog("Update", "Proceso", procesoEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Proceso actualizado - Nombre: {procesoEditando.Nombre}");
+                mensaje = "Proceso actualizado exitosamente.";
+            }
+            else
+            {
+                ProcesoBDService.AddProceso(procesoEditando);
+                LogService.RegistrarLog("Create", "Proceso", procesoEditando.Id, nombreUsuario ?? "Sistema", 
+                    $"Proceso creado - Nombre: {procesoEditando.Nombre}");
+                mensaje = "Proceso creado exitosamente.";
+            }
+            esExito = true;
+            CerrarModalProceso();
+            CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al guardar: {ex.Message}";
+            esExito = false;
+        }
+    }
+
+    private async Task EliminarProceso(int id)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar este proceso?");
+        if (confirmado)
+        {
+            try
+            {
+                ProcesoBDService.DeleteProceso(id);
+                mensaje = "Proceso eliminado exitosamente.";
+                esExito = true;
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error al eliminar: {ex.Message}";
+                esExito = false;
+            }
+        }
+    }
+
+    // Puntos Históricos
+    private void NuevoPuntosHistoricos()
+    {
+        puntosHistoricosNuevos = new PuntosHistoricos();
+        nombreUsuarioBuscar = string.Empty;
+        usuariosSugeridos.Clear();
+    }
+
+    private void BuscarUsuarios(ChangeEventArgs e)
+    {
+        nombreUsuarioBuscar = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(nombreUsuarioBuscar))
+        {
+            usuariosSugeridos.Clear();
+            puntosHistoricosNuevos.NombreUsuario = string.Empty;
+            puntosHistoricosNuevos.NumeroDocumento = string.Empty;
+        }
+        else
+        {
+            usuariosSugeridos = todosLosUsuarios
+                .Where(u => u.Contains(nombreUsuarioBuscar, StringComparison.OrdinalIgnoreCase))
+                .Take(10)
+                .ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void SeleccionarUsuario(string nombreUsuario)
+    {
+        puntosHistoricosNuevos.NombreUsuario = nombreUsuario;
+        nombreUsuarioBuscar = nombreUsuario;
+        usuariosSugeridos.Clear();
+        
+        // Buscar el número de documento del usuario
+        var idea = IdeaService.GetAllIdeas()
+            .FirstOrDefault(i => i.NombreUsuario == nombreUsuario);
+        if (idea != null)
+        {
+            puntosHistoricosNuevos.NumeroDocumento = idea.NumeroDocumento;
+        }
+        else
+        {
+            puntosHistoricosNuevos.NumeroDocumento = string.Empty;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task GuardarPuntosHistoricos()
+    {
+        if (string.IsNullOrWhiteSpace(puntosHistoricosNuevos.NombreUsuario))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "Debe seleccionar un usuario.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (puntosHistoricosNuevos.Puntos <= 0)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "Los puntos deben ser mayores a 0.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(puntosHistoricosNuevos.NumeroDocumento))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "No se encontró el número de documento para este usuario.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        try
+        {
+            PuntosHistoricosService.AddPuntosHistoricos(puntosHistoricosNuevos);
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "success",
+                title = "¡Éxito!",
+                text = "Puntos históricos asignados exitosamente.",
+                confirmButtonText = "Aceptar"
+            });
+            NuevoPuntosHistoricos();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al guardar: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    // Valor Puntos
+    private void NuevoValorPuntos()
+    {
+        valorPuntosEditando = new ValorPuntos
+        {
+            Activo = true
+        };
+        mostrarModalValorPuntos = true;
+    }
+
+    private void EditarValorPuntos(ValorPuntos valorPuntos)
+    {
+        valorPuntosEditando = new ValorPuntos
+        {
+            Id = valorPuntos.Id,
+            CostoMinimo = valorPuntos.CostoMinimo,
+            CostoMaximo = valorPuntos.CostoMaximo,
+            ValorPorPunto = valorPuntos.ValorPorPunto,
+            Activo = valorPuntos.Activo
+        };
+        mostrarModalValorPuntos = true;
+    }
+
+    private void CerrarModalValorPuntos()
+    {
+        mostrarModalValorPuntos = false;
+        valorPuntosEditando = new ValorPuntos();
+    }
+
+    private async Task GuardarValorPuntos()
+    {
+        if (valorPuntosEditando.CostoMinimo < 0 || valorPuntosEditando.CostoMaximo < 0)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "Los costos no pueden ser negativos.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (valorPuntosEditando.CostoMaximo <= valorPuntosEditando.CostoMinimo)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "El costo máximo debe ser mayor al costo mínimo.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (valorPuntosEditando.ValorPorPunto <= 0)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "El valor por punto debe ser mayor a 0.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        try
+        {
+            if (valorPuntosEditando.Id > 0)
+            {
+                ValorPuntosService.UpdateValorPuntos(valorPuntosEditando);
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Valor Puntos actualizado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+            else
+            {
+                ValorPuntosService.AddValorPuntos(valorPuntosEditando);
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Valor Puntos creado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+            CerrarModalValorPuntos();
+            CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al guardar: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private async Task EliminarValorPuntos(int id)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar este valor de puntos?");
+        if (confirmado)
+        {
+            try
+            {
+                ValorPuntosService.DeleteValorPuntos(id);
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Valor Puntos eliminado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = $"Error al eliminar: {ex.Message}",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+    }
+
+    // Gestión de Usuarios
+    private void EditarUsuario(Usuario usuario)
+    {
+        usuarioEditando = new Usuario
+        {
+            Id = usuario.Id,
+            NombreUsuario = usuario.NombreUsuario,
+            Rol = usuario.Rol
+        };
+        mostrarModalUsuario = true;
+    }
+
+    private void CerrarModalUsuario()
+    {
+        mostrarModalUsuario = false;
+        usuarioEditando = null;
+    }
+
+    private async Task GuardarUsuario()
+    {
+        if (usuarioEditando == null) return;
+
+        try
+        {
+            var exito = AuthServiceAdmin.ActualizarRol(usuarioEditando.Id, usuarioEditando.Rol, nombreUsuario ?? "Sistema", LogService);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Usuario actualizado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                CargarListaUsuarios();
+                CerrarModalUsuario();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "No se pudo actualizar el usuario.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al actualizar usuario: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private void CambiarContrasenaUsuario(int usuarioId)
+    {
+        var usuario = AuthServiceAdmin.GetUsuarioById(usuarioId);
+        if (usuario != null)
+        {
+            usuarioIdCambiarContrasena = usuarioId;
+            nombreUsuarioCambiarContrasena = usuario.NombreUsuario;
+            nuevaContrasena = string.Empty;
+            confirmarContrasena = string.Empty;
+            mostrarModalCambiarContrasena = true;
+        }
+    }
+
+    private void CerrarModalCambiarContrasena()
+    {
+        mostrarModalCambiarContrasena = false;
+        usuarioIdCambiarContrasena = 0;
+        nombreUsuarioCambiarContrasena = string.Empty;
+        nuevaContrasena = string.Empty;
+        confirmarContrasena = string.Empty;
+    }
+
+    private async Task GuardarCambiarContrasena()
+    {
+        if (string.IsNullOrWhiteSpace(nuevaContrasena))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "La contraseña no puede estar vacía.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (nuevaContrasena != confirmarContrasena)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "Las contraseñas no coinciden.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        try
+        {
+            var exito = AuthServiceAdmin.CambiarContrasenaUsuario(usuarioIdCambiarContrasena, nuevaContrasena, nombreUsuario ?? "Sistema", LogService);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Contraseña actualizada exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                CargarListaUsuarios();
+                CargarLogs();
+                CerrarModalCambiarContrasena();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "No se pudo actualizar la contraseña.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al cambiar contraseña: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private async Task BloquearDesbloquearUsuario(int usuarioId, bool activo)
+    {
+        try
+        {
+            var exito = AuthServiceAdmin.BloquearDesbloquearUsuario(usuarioId, activo, nombreUsuario ?? "Sistema", LogService);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = $"Usuario {(activo ? "desbloqueado" : "bloqueado")} exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                CargarListaUsuarios();
+                CargarLogs();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "No se pudo actualizar el estado del usuario.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al actualizar estado: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private async Task EliminarUsuario(int usuarioId)
+    {
+        var usuario = AuthServiceAdmin.GetUsuarioById(usuarioId);
+        if (usuario == null) return;
+
+        var resultado = await JSRuntime.InvokeAsync<bool>("swalConfirm", new
+        {
+            icon = "warning",
+            title = "¿Está seguro?",
+            text = $"¿Desea eliminar el usuario '{usuario.NombreUsuario}'? Esta acción no se puede deshacer.",
+            showCancelButton = true,
+            confirmButtonText = "Sí, eliminar",
+            cancelButtonText = "Cancelar"
+        });
+
+        if (!resultado) return;
+
+        try
+        {
+            var exito = AuthServiceAdmin.EliminarUsuario(usuarioId, nombreUsuario ?? "Sistema", LogService);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Usuario eliminado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                CargarListaUsuarios();
+                CargarLogs();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "No se pudo eliminar el usuario.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al eliminar usuario: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+}
+

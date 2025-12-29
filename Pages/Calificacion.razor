@@ -1,0 +1,797 @@
+@page "/calificacion"
+@page "/calificacion/{Id:int}/{Modo}"
+@inherits AuthComponentBase
+@using Microsoft.AspNetCore.Components
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@inject IdeaService IdeaService
+@inject CategoriaService CategoriaService
+@inject CategoriaBDService CategoriaBDService
+@inject EstadoBDService EstadoBDService
+@inject ProcesoBDService ProcesoBDService
+@inject LogService LogService
+
+<PageTitle>Calificación Plan de Puntos</PageTitle>
+
+<h3>Calificación Plan de Puntos</h3>
+
+@if (modoVista == "ver")
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Modo de visualización - Solo lectura
+    </div>
+}
+else if (modoVista == "editar")
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-pencil"></i> Modo de edición
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4>@(modoVista == "ver" ? "Ver Registro de Calificación" : modoVista == "editar" ? "Editar Registro de Calificación" : "Nuevo Registro de Calificación")</h4>
+    </div>
+    <div class="card-body">
+        <EditForm Model="@nuevaIdea" OnValidSubmit="@GuardarIdea">
+            <DataAnnotationsValidator />
+            
+            <!-- Información Básica -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Información Básica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="documento" class="form-label">Documento:</label>
+                            <InputText id="documento" class="form-control" @bind-Value="nuevaIdea.NumeroDocumento" @onchange="RecalcularPuntos" maxlength="50" disabled="@esModoVer" />
+                            <ValidationMessage For="@(() => nuevaIdea.NumeroDocumento)" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombre" class="form-label">Nombre:</label>
+                            <InputText id="nombre" class="form-control" @bind-Value="nuevaIdea.NombreUsuario" maxlength="200" disabled="@esModoVer" />
+                            <ValidationMessage For="@(() => nuevaIdea.NombreUsuario)" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="celular" class="form-label">Celular:</label>
+                            <InputText id="celular" class="form-control" @bind-Value="nuevaIdea.Celular" placeholder="Ej: 3001234567" maxlength="20" disabled="@esModoVer" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="proceso" class="form-label">Proceso:</label>
+                            <InputSelect id="proceso" class="form-select" @bind-Value="nuevaIdea.Proceso" disabled="@esModoVer">
+                                <option value="">Seleccione...</option>
+                                <option value="N/A">N/A</option>
+                                @foreach (var proc in procesos)
+                                {
+                                    <option value="@proc">@proc</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="categoria" class="form-label">Categoría:</label>
+                            <InputSelect id="categoria" class="form-select" @bind-Value="nuevaIdea.Categoria" @bind-Value:after="OnCategoriaChanged" disabled="@esModoVer">
+                                <option value="">Seleccione...</option>
+                                @foreach (var cat in categorias)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estado" class="form-label">Estado:</label>
+                            <InputSelect id="estado" class="form-select" @bind-Value="nuevaIdea.Estado" disabled="@esModoVer">
+                                <option value="">Seleccione...</option>
+                                <option value="N/A">N/A</option>
+                                @foreach (var est in estados)
+                                {
+                                    <option value="@est">@est</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="radicado" class="form-label">Radicado:</label>
+                            <InputText id="radicado" class="form-control" @bind-Value="nuevaIdea.Radicado" maxlength="50" disabled="@esModoVer" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaRadicado" class="form-label">Fecha Radicado:</label>
+                            <InputDate id="fechaRadicado" class="form-control" @bind-Value="nuevaIdea.FechaRadicado" disabled="@esModoVer" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="resumen" class="form-label">Resumen de la idea:</label>
+                            <InputTextArea id="resumen" class="form-control" rows="4" @bind-Value="nuevaIdea.DescripcionIdea" placeholder="Ingrese un resumen de la idea..." maxlength="4000" disabled="@esModoVer" />
+                            <ValidationMessage For="@(() => nuevaIdea.DescripcionIdea)" />
+                            <small class="text-muted">@(nuevaIdea.DescripcionIdea?.Length ?? 0) / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calificación de la Idea -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Calificación de la Idea</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="valorInversion" class="form-label">Valor Inversión:</label>
+                            <input type="text" id="valorInversion" class="form-control" value="@valorInversionFormateado" @oninput="OnValorInversionInput" disabled="@esModoVer" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="facilidadImplem" class="form-label">Facilidad Implem.:</label>
+                            <InputSelect id="facilidadImplem" class="form-select" @bind-Value="nuevaIdea.FacilidadImplem" @bind-Value:after="RecalcularPuntos" disabled="@esModoVer">
+                                <option value="">Seleccione...</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="roiMeses" class="form-label">ROI (MESES):</label>
+                            <InputSelect id="roiMeses" class="form-select" @bind-Value="nuevaIdea.RoiMeses" @bind-Value:after="RecalcularPuntos" disabled="@esModoVer">
+                                <option value="">Seleccione...</option>
+                                <option value="&lt;=3">&lt;=3</option>
+                                <option value="&gt;3&lt;=6">&gt;3&lt;=6</option>
+                                <option value="&gt;6">&gt;6</option>
+                                <option value="N/A">N/A</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Porcentajes de Impacto -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Porcentajes de Impacto</h5>
+                </div>
+                <div class="card-body">
+                    @if (categoriaSeleccionada != null && categoriaSeleccionada.Impactos.Count > 0)
+                    {
+                        <div class="row">
+                            @{
+                                int impactoIndex = 0;
+                            }
+                            @foreach (var impacto in categoriaSeleccionada.Impactos)
+                            {
+                                var currentImpacto = impacto;
+                                var impactoNombre = currentImpacto.Nombre;
+                                var currentIndex = impactoIndex++;
+                                var impactoValue = nuevaIdea.Impactos.ContainsKey(impactoNombre) ? nuevaIdea.Impactos[impactoNombre] : 0m;
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label">@impactoNombre (@currentImpacto.PorcentajeMaximo%):</label>
+                                    <input type="number" 
+                                           class="form-control @(GetImpactoErrorClass(impactoNombre))" 
+                                           value="@impactoValue"
+                                           @onchange="@((ChangeEventArgs e) => { 
+                                               var val = decimal.TryParse(e.Value?.ToString(), out var d) ? d : 0m;
+                                               OnImpactoValueChanged(impactoNombre, val, currentImpacto.PorcentajeMaximo);
+                                           })"
+                                           min="0" 
+                                           max="@currentImpacto.PorcentajeMaximo" 
+                                           step="0.01"
+                                           disabled="@esModoVer" />
+                                    @if (HasImpactoError(impactoNombre))
+                                    {
+                                        <div class="text-danger small">⚠ El valor no puede exceder @currentImpacto.PorcentajeMaximo%</div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(errorValidacionImpacto))
+                        {
+                            <div class="text-danger small mt-2">⚠ @errorValidacionImpacto</div>
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(nuevaIdea.Categoria))
+                    {
+                        <div class="alert alert-info">
+                            Seleccione una categoría para ver los campos de impacto.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            Seleccione una categoría para ver los campos de impacto.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Puntos Extra -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Puntos Extra</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="puntosExtra" class="form-label">Puntos Extra:</label>
+                            <InputNumber id="puntosExtra" class="form-control" @bind-Value="nuevaIdea.PuntosExtra" @bind-Value:after="RecalcularPuntos" min="0" disabled="@esModoVer" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="comentariosPuntosExtra" class="form-label">Comentarios Puntos Extra:</label>
+                            <InputTextArea id="comentariosPuntosExtra" class="form-control" rows="3" @bind-Value="nuevaIdea.ComentariosPuntosExtra" maxlength="4000" disabled="@esModoVer" />
+                            <small class="text-muted">@(nuevaIdea.ComentariosPuntosExtra?.Length ?? 0) / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Observaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="observaciones" class="form-label">Observaciones:</label>
+                            <InputTextArea id="observaciones" class="form-control" rows="3" @bind-Value="nuevaIdea.Observaciones" maxlength="4000" disabled="@esModoVer" />
+                            <small class="text-muted">@(nuevaIdea.Observaciones?.Length ?? 0) / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Puntos Calculados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Valor Inversión:</strong> @((int)Math.Round(nuevaIdea.PuntosValorInversion))
+                        </div>
+                        <div class="col-md-3">
+                            <strong>ROI:</strong> @((int)Math.Round(nuevaIdea.PuntosROI))
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Facilidad Implem.:</strong> @((int)Math.Round(nuevaIdea.PuntosFacilidadImplem))
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Impacto:</strong> @((int)Math.Round(nuevaIdea.PuntosImpacto))
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <strong>Puntos Extra:</strong> @((int)Math.Round(nuevaIdea.PuntosExtra))
+                        </div>
+                        <div class="col-md-9">
+                            <h4><strong>Total: @((int)Math.Round(nuevaIdea.PuntosTotales)) puntos</strong></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                @if (!esModoVer)
+                {
+                    <button type="submit" class="btn btn-primary">@(esModoEditar ? "Actualizar" : "Guardar")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="LimpiarFormulario">Limpiar</button>
+                }
+                @if (esModoVer || esModoEditar)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="VolverAListado">Volver al Listado</button>
+                }
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string? Modo { get; set; }
+    
+    private Idea nuevaIdea = new Idea();
+    private List<string> categorias = new();
+    private List<string> procesos = new();
+    private List<string> estados = new();
+    private Categoria? categoriaSeleccionada;
+    private string errorValidacionImpacto = string.Empty;
+    private string valorInversionFormateado = string.Empty;
+    private string modoVista = string.Empty;
+    private bool esModoVer = false;
+    private bool esModoEditar = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RequiereAutenticacion();
+        await VerificarAutenticacion();
+        
+        // Determinar el modo de vista
+        modoVista = (Modo ?? "").ToLower();
+        esModoVer = modoVista == "ver";
+        esModoEditar = modoVista == "editar";
+        
+        // Validar acceso según el modo
+        if (esModoEditar)
+        {
+            // Solo SuperAdmin puede editar
+            if (!esSuperAdmin)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Acceso Denegado",
+                    text = "Solo los SuperAdmin pueden editar registros.",
+                    confirmButtonText = "Aceptar"
+                });
+                NavigationManager.NavigateTo("/listado-calificaciones");
+                return;
+            }
+        }
+        else if (!esModoVer)
+        {
+            // Modo nuevo registro - solo SuperAdmin
+            if (!esSuperAdmin)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Acceso Denegado",
+                    text = "Solo los SuperAdmin pueden crear nuevos registros.",
+                    confirmButtonText = "Aceptar"
+                });
+                NavigationManager.NavigateTo("/");
+                return;
+            }
+        }
+        // Si es modo "ver", permitir acceso a todos los usuarios autenticados (SuperAdmin y Consulta)
+        
+        await CargarDatosAsync();
+        await CargarProcesosYEstadosAsync();
+        
+        await CargarRegistroAsync();
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        // Recargar cuando cambian los parámetros (Id o Modo)
+        if (Id > 0 || !string.IsNullOrEmpty(Modo))
+        {
+            modoVista = (Modo ?? "").ToLower();
+            esModoVer = modoVista == "ver";
+            esModoEditar = modoVista == "editar";
+            await CargarRegistroAsync();
+        }
+    }
+    
+    private async Task CargarRegistroAsync()
+    {
+        // Si hay un ID, cargar el registro
+        if (Id > 0)
+        {
+            _cargandoRegistroExistente = true;
+            var ideaExistente = IdeaService.GetIdeaById(Id);
+            if (ideaExistente != null)
+            {
+                nuevaIdea = ideaExistente;
+                if (nuevaIdea.ValorInversion.HasValue && nuevaIdea.ValorInversion.Value > 0)
+                {
+                    valorInversionFormateado = nuevaIdea.ValorInversion.Value.ToString("N0");
+                }
+                // Cargar categoría seleccionada para mostrar impactos (preservando valores existentes)
+                if (!string.IsNullOrEmpty(nuevaIdea.Categoria))
+                {
+                    OnCategoriaChanged();
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "No se encontró el registro solicitado.",
+                    confirmButtonText = "Aceptar"
+                });
+                NavigationManager.NavigateTo("/listado-calificaciones");
+                _cargandoRegistroExistente = false;
+                return;
+            }
+            _cargandoRegistroExistente = false;
+        }
+        else
+        {
+            // Nuevo registro - limpiar formulario
+            nuevaIdea = new Idea();
+            categoriaSeleccionada = null;
+            errorValidacionImpacto = string.Empty;
+            valorInversionFormateado = string.Empty;
+        }
+        
+        RecalcularPuntos(); // Inicializar puntos al cargar
+        if (nuevaIdea.ValorInversion.HasValue && nuevaIdea.ValorInversion.Value > 0)
+        {
+            valorInversionFormateado = nuevaIdea.ValorInversion.Value.ToString("N0");
+        }
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        try
+        {
+            // Cargar categorías desde BD
+            var categoriasBD = CategoriaBDService.GetAllCategorias();
+            categorias = categoriasBD.Select(c => c.Nombre).ToList();
+        }
+        catch
+        {
+            // Fallback a JSON si hay error
+            await CategoriaService.CargarCategoriasAsync();
+            categorias = CategoriaService.ObtenerNombresCategorias();
+        }
+    }
+
+    private async Task CargarProcesosYEstadosAsync()
+    {
+        try
+        {
+            // Cargar desde BD
+            procesos = ProcesoBDService.GetNombresProcesos();
+            estados = EstadoBDService.GetNombresEstados();
+        }
+        catch
+        {
+            // Fallback a JSON si hay error
+            try
+            {
+                var httpClient = new HttpClient();
+                httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+                var json = await httpClient.GetStringAsync("procesos_estados.json");
+                var config = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                procesos = config?.GetValueOrDefault("Procesos") ?? new List<string>();
+                estados = config?.GetValueOrDefault("Estados") ?? new List<string>();
+            }
+            catch
+            {
+                procesos = new List<string> { "Atención al Cliente", "Ventas", "Operaciones", "Recursos Humanos", "Tecnología", "Administración" };
+                estados = new List<string> { "Pendiente", "En Revisión", "Aprobada", "Implementada", "Rechazada" };
+            }
+        }
+    }
+
+    private bool _cargandoRegistroExistente = false;
+    
+    private void OnCategoriaChanged()
+    {
+        try
+        {
+            // Intentar obtener desde BD primero
+            var categoriaBD = CategoriaBDService.GetCategoriaPorNombre(nuevaIdea.Categoria);
+            if (categoriaBD != null)
+            {
+                categoriaSeleccionada = CategoriaBDService.ConvertirACategoriaModel(categoriaBD);
+            }
+            else
+            {
+                // Fallback a JSON
+                categoriaSeleccionada = CategoriaService.ObtenerPorNombre(nuevaIdea.Categoria);
+            }
+        }
+        catch
+        {
+            categoriaSeleccionada = CategoriaService.ObtenerPorNombre(nuevaIdea.Categoria);
+        }
+        
+        // Si NO estamos cargando un registro existente, limpiar e inicializar impactos
+        // Si estamos cargando un registro existente, preservar los valores existentes
+        if (!_cargandoRegistroExistente)
+        {
+            // Limpiar impactos anteriores e inicializar con 0 para todos los impactos de la nueva categoría
+            nuevaIdea.Impactos.Clear();
+            _erroresImpacto.Clear();
+            if (categoriaSeleccionada != null && categoriaSeleccionada.Impactos != null)
+            {
+                foreach (var impacto in categoriaSeleccionada.Impactos)
+                {
+                    nuevaIdea.Impactos[impacto.Nombre] = 0;
+                    _erroresImpacto[impacto.Nombre] = false;
+                }
+            }
+        }
+        else
+        {
+            // Preservar impactos existentes, solo agregar los que faltan
+            if (categoriaSeleccionada != null && categoriaSeleccionada.Impactos != null)
+            {
+                foreach (var impacto in categoriaSeleccionada.Impactos)
+                {
+                    if (!nuevaIdea.Impactos.ContainsKey(impacto.Nombre))
+                    {
+                        nuevaIdea.Impactos[impacto.Nombre] = 0;
+                    }
+                    if (!_erroresImpacto.ContainsKey(impacto.Nombre))
+                    {
+                        _erroresImpacto[impacto.Nombre] = false;
+                    }
+                }
+            }
+        }
+        RecalcularPuntos();
+        StateHasChanged();
+    }
+
+    private Dictionary<string, bool> _erroresImpacto = new();
+
+    private decimal? GetImpactoValue(string nombre)
+    {
+        return nuevaIdea.Impactos.ContainsKey(nombre) ? nuevaIdea.Impactos[nombre] : 0m;
+    }
+
+    private void OnImpactoValueChanged(string nombre, decimal valor, decimal porcentajeMaximo)
+    {
+        try
+        {
+            // Validar que no exceda el máximo
+            decimal valorFinal = valor;
+            if (valor > porcentajeMaximo)
+            {
+                _erroresImpacto[nombre] = true;
+                // Corregir automáticamente al máximo permitido
+                valorFinal = porcentajeMaximo;
+            }
+            else if (valor < 0)
+            {
+                _erroresImpacto[nombre] = true;
+                valorFinal = 0;
+            }
+            else
+            {
+                _erroresImpacto[nombre] = false;
+            }
+            
+            // Obtener el diccionario actual y actualizarlo
+            var impactosActuales = new Dictionary<string, decimal>(nuevaIdea.Impactos);
+            impactosActuales[nombre] = valorFinal;
+            
+            // Asignar el diccionario actualizado para que se serialice correctamente
+            nuevaIdea.Impactos = impactosActuales;
+            
+            ValidarImpactos();
+            RecalcularPuntos();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en OnImpactoValueChanged: {ex.Message}");
+        }
+    }
+
+    private bool HasImpactoError(string nombre)
+    {
+        return _erroresImpacto.ContainsKey(nombre) && _erroresImpacto[nombre];
+    }
+
+    private string GetImpactoErrorClass(string nombre)
+    {
+        return HasImpactoError(nombre) ? "border-danger" : "";
+    }
+
+    private void ValidarImpactos()
+    {
+        if (categoriaSeleccionada == null)
+        {
+            errorValidacionImpacto = string.Empty;
+            return;
+        }
+
+        var error = FormulaService.ValidarLimitesImpacto(nuevaIdea.Impactos, categoriaSeleccionada.Impactos);
+        errorValidacionImpacto = error ?? string.Empty;
+    }
+
+    private void RecalcularPuntos()
+    {
+        try
+        {
+            // Convertir ImpactoBD a ImpactoConfig si es necesario
+            List<ImpactoConfig>? impactosConfig = null;
+            if (categoriaSeleccionada != null && categoriaSeleccionada.Impactos != null)
+            {
+                impactosConfig = categoriaSeleccionada.Impactos;
+                
+                // Asegurar que el diccionario de impactos tenga todos los valores
+                var impactosActuales = new Dictionary<string, decimal>(nuevaIdea.Impactos);
+                foreach (var impacto in categoriaSeleccionada.Impactos)
+                {
+                    if (!impactosActuales.ContainsKey(impacto.Nombre))
+                    {
+                        impactosActuales[impacto.Nombre] = 0;
+                    }
+                }
+                // Actualizar el diccionario si hubo cambios
+                if (impactosActuales.Count != nuevaIdea.Impactos.Count)
+                {
+                    nuevaIdea.Impactos = impactosActuales;
+                }
+            }
+            
+            // Obtener una copia actualizada del diccionario para el cálculo
+            var impactosParaCalculo = new Dictionary<string, decimal>(nuevaIdea.Impactos);
+            
+            // Calcular puntos pasando el diccionario actualizado
+            FormulaService.CalcularTodosLosPuntos(nuevaIdea, impactosConfig);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Log del error pero no bloquear
+            Console.WriteLine($"Error al recalcular puntos: {ex.Message}");
+        }
+    }
+
+    private void OnValorInversionInput(ChangeEventArgs e)
+    {
+        var inputValue = e.Value?.ToString() ?? string.Empty;
+        // Remover todos los caracteres que no sean dígitos
+        var numeros = new string(inputValue.Where(char.IsDigit).ToArray());
+        
+        if (string.IsNullOrEmpty(numeros))
+        {
+            nuevaIdea.ValorInversion = 0;
+            valorInversionFormateado = string.Empty;
+        }
+        else
+        {
+            if (decimal.TryParse(numeros, out var valor))
+            {
+                nuevaIdea.ValorInversion = valor;
+                // Formatear con separadores de miles
+                valorInversionFormateado = valor.ToString("N0");
+            }
+        }
+        
+        RecalcularPuntos();
+        StateHasChanged();
+    }
+
+    private async Task GuardarIdea()
+    {
+        if (string.IsNullOrWhiteSpace(nuevaIdea.NumeroDocumento))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error de validación",
+                text = "El documento es requerido.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(nuevaIdea.NombreUsuario))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error de validación",
+                text = "El nombre es requerido.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(nuevaIdea.Categoria))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error de validación",
+                text = "Debe seleccionar una categoría.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(nuevaIdea.DescripcionIdea))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error de validación",
+                text = "El resumen de la idea es requerido.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        // Validar impactos antes de guardar
+        ValidarImpactos();
+        if (!string.IsNullOrEmpty(errorValidacionImpacto))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error de Validación",
+                text = errorValidacionImpacto,
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        // Calcular puntos finales antes de guardar
+        RecalcularPuntos();
+
+        if (esModoEditar && Id > 0)
+        {
+            // Actualizar registro existente
+            nuevaIdea.Id = Id;
+            IdeaService.UpdateIdea(nuevaIdea);
+            
+            // Registrar log
+            LogService.RegistrarLog("Update", "Idea", nuevaIdea.Id, nombreUsuario ?? "Sistema", 
+                $"Calificación actualizada - ID: {nuevaIdea.Id}, Documento: {nuevaIdea.NumeroDocumento}, Puntos: {((int)Math.Round(nuevaIdea.PuntosTotales))}");
+
+            var puntosTotales = nuevaIdea.PuntosTotales;
+            
+            // Mostrar mensaje de éxito con SweetAlert2
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "success",
+                title = "¡Éxito!",
+                text = $"Registro actualizado exitosamente. Puntos totales: {((int)Math.Round(puntosTotales))}",
+                confirmButtonText = "Aceptar"
+            });
+            
+            // Volver al listado después de actualizar
+            await Task.Delay(1000);
+            NavigationManager.NavigateTo("/listado-calificaciones");
+        }
+        else
+        {
+            // Crear nuevo registro
+            nuevaIdea.FechaRegistro = TimeHelper.GetColombiaTime();
+            IdeaService.AddIdea(nuevaIdea);
+
+            // Registrar log
+            LogService.RegistrarLog("Create", "Idea", nuevaIdea.Id, nombreUsuario ?? "Sistema", 
+                $"Nueva calificación creada - Documento: {nuevaIdea.NumeroDocumento}, Puntos: {((int)Math.Round(nuevaIdea.PuntosTotales))}");
+
+            var puntosTotales = nuevaIdea.PuntosTotales;
+            LimpiarFormulario();
+
+            // Mostrar mensaje de éxito con SweetAlert2
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "success",
+                title = "¡Éxito!",
+                text = $"Registro guardado exitosamente. Puntos totales: {((int)Math.Round(puntosTotales))}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+    
+    private void VolverAListado()
+    {
+        NavigationManager.NavigateTo("/listado-calificaciones");
+    }
+
+    private void LimpiarFormulario()
+    {
+        nuevaIdea = new Idea();
+        categoriaSeleccionada = null;
+        errorValidacionImpacto = string.Empty;
+        valorInversionFormateado = string.Empty;
+        RecalcularPuntos();
+    }
+
+}

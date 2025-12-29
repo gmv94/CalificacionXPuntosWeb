@@ -1,0 +1,174 @@
+@page "/puntos-acumulados"
+@inherits AuthComponentBase
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@inject IdeaService IdeaService
+@inject RedencionService RedencionService
+@inject PuntosHistoricosService PuntosHistoricosService
+
+<PageTitle>Puntos Acumulados</PageTitle>
+
+<h3>Puntos Acumulados</h3>
+
+@if (puntosAcumulados == null || !puntosAcumulados.Any())
+{
+    <p>No hay puntos acumulados registrados.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Número Documento</th>
+                    <th>Nombre Usuario</th>
+                    <th>Total Ideas</th>
+                    <th>Puntos Históricos</th>
+                    <th>Total Puntos</th>
+                    <th>Puntos Disponibles</th>
+                    <th>Puntos Utilizados</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in puntosAcumulados)
+                {
+                    <tr>
+                        <td>@item.NumeroDocumento</td>
+                        <td>@item.NombreUsuario</td>
+                        <td>@item.TotalIdeas</td>
+                        <td>@item.PuntosHistoricos</td>
+                        <td>@item.TotalPuntos</td>
+                        <td>@item.PuntosDisponibles</td>
+                        <td>@item.PuntosUtilizados</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(item.NumeroDocumento)">
+                                Ver Detalle
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (mostrarDetalle && detalleSeleccionado != null)
+{
+    <div class="modal" style="display:block; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalle de Ideas - @detalleSeleccionado.NumeroDocumento</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarDetalle"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Usuario:</strong> @detalleSeleccionado.NombreUsuario</p>
+                    <p><strong>Total Ideas:</strong> @detalleSeleccionado.TotalIdeas</p>
+                    <p><strong>Puntos Históricos:</strong> @detalleSeleccionado.PuntosHistoricos</p>
+                    <p><strong>Total Puntos:</strong> @detalleSeleccionado.TotalPuntos</p>
+                    @if (puntosHistoricosDetalle != null && puntosHistoricosDetalle.Any())
+                    {
+                        <div class="mb-3">
+                            <h6>Puntos Históricos:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Puntos</th>
+                                            <th>Observaciones</th>
+                                            <th>Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var historico in puntosHistoricosDetalle)
+                                        {
+                                            <tr>
+                                                <td>@historico.Puntos</td>
+                                                <td>@historico.Observaciones</td>
+                                                <td>@historico.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    <h6>Ideas:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th>Puntos</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var idea in detalleSeleccionado.Ideas)
+                                {
+                                    <tr>
+                                        <td>@idea.DescripcionIdea</td>
+                                        <td>@idea.Puntos</td>
+                                        <td>@idea.Estado</td>
+                                        <td>@idea.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarDetalle">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<Models.PuntosAcumulados>? puntosAcumulados;
+    private bool mostrarDetalle = false;
+    private Models.PuntosAcumulados? detalleSeleccionado;
+    private List<PuntosHistoricos> puntosHistoricosDetalle = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RequiereAutenticacion();
+        CargarPuntosAcumulados();
+    }
+
+    private void CargarPuntosAcumulados()
+    {
+        puntosAcumulados = IdeaService.GetPuntosAcumulados();
+        
+        // Calcular puntos disponibles y utilizados
+        foreach (var item in puntosAcumulados)
+        {
+            var redenciones = RedencionService.GetRedencionesPorDocumento(item.NumeroDocumento);
+            item.PuntosUtilizados = redenciones.Sum(r => r.PuntosUtilizados);
+            item.PuntosDisponibles = item.TotalPuntos - item.PuntosUtilizados;
+        }
+    }
+
+    private void VerDetalle(string numeroDocumento)
+    {
+        detalleSeleccionado = puntosAcumulados?.FirstOrDefault(p => p.NumeroDocumento == numeroDocumento);
+        if (detalleSeleccionado != null)
+        {
+            puntosHistoricosDetalle = PuntosHistoricosService.GetPuntosHistoricosPorDocumento(numeroDocumento);
+        }
+        mostrarDetalle = true;
+    }
+
+    private void CerrarDetalle()
+    {
+        mostrarDetalle = false;
+        detalleSeleccionado = null;
+        puntosHistoricosDetalle.Clear();
+    }
+}
+

@@ -1,0 +1,132 @@
+{
+  "Categorias": [
+    {
+      "Nombre": "Ambiental",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Ambiental",
+          "PorcentajeMaximo": 25
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 25
+        },
+        {
+          "Nombre": "Impacto SST",
+          "PorcentajeMaximo": 20
+        },
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 25
+        },
+        {
+          "Nombre": "Impacto Orden y Aseo",
+          "PorcentajeMaximo": 5
+        }
+      ]
+    },
+    {
+      "Nombre": "Tecnología",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Tecnológico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 40
+        }
+      ]
+    },
+    {
+      "Nombre": "Seguridad",
+      "Impactos": [
+        {
+          "Nombre": "Impacto SST",
+          "PorcentajeMaximo": 50
+        },
+        {
+          "Nombre": "Impacto Ambiental",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 20
+        }
+      ]
+    },
+    {
+      "Nombre": "Innovación",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Tecnológico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 40
+        }
+      ]
+    },
+    {
+      "Nombre": "Mejora Continua",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 40
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Calidad",
+          "PorcentajeMaximo": 30
+        }
+      ]
+    },
+    {
+      "Nombre": "Eficiencia",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 50
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Calidad",
+          "PorcentajeMaximo": 20
+        }
+      ]
+    },
+    {
+      "Nombre": "Calidad",
+      "Impactos": [
+        {
+          "Nombre": "Impacto Calidad",
+          "PorcentajeMaximo": 50
+        },
+        {
+          "Nombre": "Impacto Económico",
+          "PorcentajeMaximo": 30
+        },
+        {
+          "Nombre": "Impacto Productividad",
+          "PorcentajeMaximo": 20
+        }
+      ]
+    }
+  ]
+}
+

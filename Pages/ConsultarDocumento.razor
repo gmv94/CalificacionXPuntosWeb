@@ -1,0 +1,276 @@
+@page "/consultar-documento"
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@inject IdeaService IdeaService
+@inject RedencionService RedencionService
+@inject PuntosHistoricosService PuntosHistoricosService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Consultar por Documento</PageTitle>
+
+<h3>Consultar por Número de Documento</h3>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Buscar Usuario</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="numeroDocumento" class="form-label">Número de Documento</label>
+                    <input type="text" class="form-control" id="numeroDocumento" @bind="numeroDocumentoBuscar" @onkeypress="HandleKeyPress" />
+                </div>
+                <button class="btn btn-primary" @onclick="BuscarUsuario">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (puntosUsuario != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5>Información del Usuario</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Documento:</strong> @puntosUsuario.NumeroDocumento
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Nombre:</strong> @puntosUsuario.NombreUsuario
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Total Ideas:</strong> @puntosUsuario.TotalIdeas
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Puntos Históricos:</strong> @puntosUsuario.PuntosHistoricos
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Total Puntos:</strong> 
+                            <span class="badge bg-success fs-6">@puntosUsuario.TotalPuntos</span>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <strong>Puntos Disponibles:</strong> 
+                            <span class="badge bg-info fs-6">@puntosDisponibles</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Puntos Utilizados:</strong> 
+                            <span class="badge bg-warning fs-6">@puntosUtilizados</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Ideas Registradas</h5>
+                </div>
+                <div class="card-body">
+                    @if (puntosUsuario.Ideas == null || !puntosUsuario.Ideas.Any())
+                    {
+                        <p>No hay ideas registradas.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Radicado</th>
+                                        <th>Categoría</th>
+                                        <th>Proceso</th>
+                                        <th>Estado</th>
+                                        <th>Puntos</th>
+                                        <th>Fecha Radicado</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var idea in puntosUsuario.Ideas)
+                                    {
+                                        var observacionesId = $"obs_{idea.Id}";
+                                        <tr>
+                                            <td>@idea.Radicado</td>
+                                            <td>@idea.Categoria</td>
+                                            <td>@idea.Proceso</td>
+                                            <td>@idea.Estado</td>
+                                            <td>@idea.Puntos</td>
+                                            <td>@(idea.FechaRadicado?.ToString("dd/MM/yyyy") ?? idea.FechaRegistro.ToString("dd/MM/yyyy"))</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(idea.Observaciones))
+                                                {
+                                                    <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#@observacionesId" aria-expanded="false" aria-controls="@observacionesId">
+                                                        <i class="bi bi-chevron-down"></i> Ver
+                                                    </button>
+                                                    <div class="collapse" id="@observacionesId">
+                                                        <div class="mt-2 p-2 bg-light border rounded">
+                                                            @idea.Observaciones
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (puntosHistoricosUsuario != null && puntosHistoricosUsuario.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Puntos Históricos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Puntos</th>
+                                        <th>Observaciones</th>
+                                        <th>Fecha Creación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var historico in puntosHistoricosUsuario)
+                                    {
+                                        <tr>
+                                            <td>@historico.Puntos</td>
+                                            <td>@historico.Observaciones</td>
+                                            <td>@historico.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Premios Redimidos</h5>
+                </div>
+                <div class="card-body">
+                    @if (redencionesUsuario == null || !redencionesUsuario.Any())
+                    {
+                        <p>No hay premios redimidos.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Premio</th>
+                                        <th>Puntos Utilizados</th>
+                                        <th>Fecha Redención</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var redencion in redencionesUsuario)
+                                    {
+                                        <tr>
+                                            <td>@redencion.NombrePremio</td>
+                                            <td>@redencion.PuntosUtilizados</td>
+                                            <td>@redencion.FechaRedencion.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@redencion.Estado</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-@(esExito ? "success" : "danger") alert-dismissible fade show mt-3" role="alert">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+    </div>
+}
+
+@code {
+    private string numeroDocumentoBuscar = string.Empty;
+    private Models.PuntosAcumulados? puntosUsuario;
+    private List<Redencion>? redencionesUsuario;
+    private List<PuntosHistoricos>? puntosHistoricosUsuario;
+    private int puntosDisponibles = 0;
+    private int puntosUtilizados = 0;
+    private string mensaje = string.Empty;
+    private bool esExito = false;
+
+    private void BuscarUsuario()
+    {
+        if (string.IsNullOrWhiteSpace(numeroDocumentoBuscar))
+        {
+            mensaje = "Por favor ingrese un número de documento.";
+            esExito = false;
+            return;
+        }
+
+        puntosUsuario = IdeaService.GetPuntosAcumuladosPorDocumento(numeroDocumentoBuscar);
+        
+        if (puntosUsuario == null)
+        {
+            mensaje = "No se encontraron registros para este documento.";
+            esExito = false;
+            puntosUsuario = null;
+            redencionesUsuario = null;
+            puntosHistoricosUsuario = null;
+            return;
+        }
+
+        // Calcular puntos disponibles y utilizados
+        redencionesUsuario = RedencionService.GetRedencionesPorDocumento(numeroDocumentoBuscar);
+        puntosUtilizados = redencionesUsuario.Sum(r => r.PuntosUtilizados);
+        puntosDisponibles = puntosUsuario.TotalPuntos - puntosUtilizados;
+
+        // Cargar puntos históricos
+        puntosHistoricosUsuario = PuntosHistoricosService.GetPuntosHistoricosPorDocumento(numeroDocumentoBuscar);
+
+        mensaje = string.Empty;
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            BuscarUsuario();
+        }
+    }
+}
+

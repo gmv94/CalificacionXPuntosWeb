@@ -1,0 +1,48 @@
+@page
+@using System
+@using Microsoft.AspNetCore.Components.Web
+@using CalificacionXPuntosWeb
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puntos por Ideas</title>
+    <base href="~/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/sweetalert2.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="CalificacionXPuntosWeb.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="img/Logo.png" />
+</head>
+<body>
+    <div id="app">
+        <component type="typeof(App)" render-mode="Server" />
+    </div>
+
+    <div id="blazor-error-ui">
+        @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
+        {
+            <text>Ha ocurrido un error. Esta aplicación puede no responder hasta que se recargue.</text>
+        }
+        else
+        {
+            <text>Ha ocurrido una excepción no controlada. Consulte los registros del navegador para obtener más detalles.</text>
+        }
+        <a href="" class="reload">Recargar</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="js/sweetalert2.min.js"></script>
+    <script src="js/sweetalert-helper.js"></script>
+    <script src="_framework/blazor.server.js"></script>
+    <script src="js/download.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

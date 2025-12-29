@@ -1,0 +1,24 @@
+{
+  "Procesos": [
+    "Atención al Cliente",
+    "Ventas",
+    "Operaciones",
+    "Recursos Humanos",
+    "Tecnología",
+    "Administración",
+    "Producción",
+    "Logística",
+    "Calidad",
+    "Mantenimiento"
+  ],
+  "Estados": [
+    "Pendiente",
+    "En Revisión",
+    "Aprobada",
+    "Implementada",
+    "Rechazada",
+    "En Pausa",
+    "Cancelada"
+  ]
+}
+

@@ -1,0 +1,455 @@
+@page "/listado-calificaciones"
+@inherits AuthComponentBase
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@using ClosedXML.Excel
+@using System.IO
+@inject IdeaService IdeaService
+@inject CategoriaBDService CategoriaBDService
+@inject EstadoBDService EstadoBDService
+@inject ProcesoBDService ProcesoBDService
+@inject LogService LogService
+
+<PageTitle>Listado de Calificaciones</PageTitle>
+
+<h3>Listado de Calificaciones</h3>
+
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="ExportarDatos">
+        <i class="bi bi-download"></i> Exportar Excel
+    </button>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Filtros</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">Número Documento:</label>
+                <input type="text" class="form-control" value="@filtroDocumento" @oninput="(e) => { filtroDocumento = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Nombre Usuario:</label>
+                <input type="text" class="form-control" value="@filtroNombre" @oninput="(e) => { filtroNombre = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Categoría:</label>
+                <select class="form-select" value="@filtroCategoria" @onchange="(e) => { filtroCategoria = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }">
+                    <option value="">Todas</option>
+                    @foreach (var cat in categoriasDisponibles)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Proceso:</label>
+                <input type="text" class="form-control" value="@filtroProceso" @oninput="(e) => { filtroProceso = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-3">
+                <label class="form-label">Estado:</label>
+                <select class="form-select" value="@filtroEstado" @onchange="(e) => { filtroEstado = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }">
+                    <option value="">Todos</option>
+                    @foreach (var est in estadosDisponibles)
+                    {
+                        <option value="@est">@est</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Radicado:</label>
+                <input type="text" class="form-control" value="@filtroRadicado" @oninput="(e) => { filtroRadicado = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fecha Desde:</label>
+                <input type="date" class="form-control" value="@filtroFechaDesde?.ToString("yyyy-MM-dd")" @onchange="(e) => { if (DateTime.TryParse(e.Value?.ToString(), out var fecha)) { filtroFechaDesde = fecha; } else { filtroFechaDesde = null; } paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fecha Hasta:</label>
+                <input type="date" class="form-control" value="@filtroFechaHasta?.ToString("yyyy-MM-dd")" @onchange="(e) => { if (DateTime.TryParse(e.Value?.ToString(), out var fecha)) { filtroFechaHasta = fecha; } else { filtroFechaHasta = null; } paginaActual = 1; AplicarFiltros(); }" />
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
+                <button class="btn btn-secondary" @onclick="LimpiarFiltros">Limpiar Filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de resultados -->
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Documento</th>
+                <th>Nombre</th>
+                <th>Celular</th>
+                <th>Categoría</th>
+                <th>Proceso</th>
+                <th>Estado</th>
+                <th>Radicado</th>
+                <th>Fecha Radicado</th>
+                <th>Puntos Totales</th>
+                <th>Fecha Registro</th>
+                <th>Detalle</th>
+                @if (esSuperAdmin)
+                {
+                    <th>Acciones</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (ideasPaginadas.Any())
+            {
+                @foreach (var idea in ideasPaginadas)
+                {
+                    <tr>
+                        <td>@idea.Id</td>
+                        <td>@idea.NumeroDocumento</td>
+                        <td>@idea.NombreUsuario</td>
+                        <td>@idea.Celular</td>
+                        <td>@idea.Categoria</td>
+                        <td>@idea.Proceso</td>
+                        <td>@idea.Estado</td>
+                        <td>@idea.Radicado</td>
+                        <td>@(idea.FechaRadicado?.ToString("dd/MM/yyyy") ?? "")</td>
+                        <td>@((int)Math.Round(idea.PuntosTotales))</td>
+                        <td>@idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(idea)">
+                                <i class="bi bi-eye"></i> Ver
+                            </button>
+                        </td>
+                        @if (esSuperAdmin)
+                        {
+                            <td>
+                                <button class="btn btn-sm btn-warning p-1" @onclick="() => EditarRegistro(idea)" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger p-1 ms-1" @onclick="() => EliminarRegistro(idea)" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="@(esSuperAdmin ? "13" : "12")" class="text-center">No se encontraron registros con los filtros aplicados.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+@if (totalPaginas > 1)
+{
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(paginaActual == 1 ? "disabled" : "")">
+                <a class="page-link" href="#" @onclick="() => CambiarPagina(paginaActual - 1)" @onclick:preventDefault>Anterior</a>
+            </li>
+            @for (int i = 1; i <= totalPaginas; i++)
+            {
+                <li class="page-item @(i == paginaActual ? "active" : "")">
+                    <a class="page-link" href="#" @onclick="() => CambiarPagina(i)" @onclick:preventDefault>@i</a>
+                </li>
+            }
+            <li class="page-item @(paginaActual == totalPaginas ? "disabled" : "")">
+                <a class="page-link" href="#" @onclick="() => CambiarPagina(paginaActual + 1)" @onclick:preventDefault>Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+<div class="mt-3">
+    <p>Total de registros: <strong>@ideasFiltradas.Count</strong> | Mostrando página <strong>@paginaActual</strong> de <strong>@totalPaginas</strong></p>
+</div>
+
+
+@code {
+    private List<Idea> todasLasIdeas = new();
+    private List<Idea> ideasFiltradas = new();
+    private List<Idea> ideasPaginadas = new();
+    private List<string> categoriasDisponibles = new();
+    private List<string> estadosDisponibles = new();
+    private List<string> procesosDisponibles = new();
+    
+    private string filtroDocumento = string.Empty;
+    private string filtroNombre = string.Empty;
+    private string filtroCategoria = string.Empty;
+    private string filtroProceso = string.Empty;
+    private string filtroEstado = string.Empty;
+    private string filtroRadicado = string.Empty;
+    private DateTime? filtroFechaDesde = null;
+    private DateTime? filtroFechaHasta = null;
+    
+    private int paginaActual = 1;
+    private int registrosPorPagina = 20;
+    private int totalPaginas = 1;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RequiereAutenticacion();
+        await VerificarAutenticacion();
+        var rol = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "rol") ?? string.Empty;
+        if (!esSuperAdmin && rol != "Consulta")
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Acceso Denegado",
+                text = "Solo los SuperAdmin y usuarios con rol Consulta pueden acceder a esta sección.",
+                confirmButtonText = "Aceptar"
+            });
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+        CargarDatos();
+    }
+
+    private void CargarDatos()
+    {
+        try
+        {
+            todasLasIdeas = IdeaService.GetAllIdeas() ?? new List<Idea>();
+            categoriasDisponibles = CategoriaBDService.GetAllCategorias().Where(c => c.Activo).Select(c => c.Nombre).Distinct().OrderBy(c => c).ToList();
+            estadosDisponibles = EstadoBDService.GetNombresEstados().Distinct().OrderBy(e => e).ToList();
+            procesosDisponibles = ProcesoBDService.GetNombresProcesos().Distinct().OrderBy(p => p).ToList();
+            AplicarFiltros();
+        }
+        catch (Exception ex)
+        {
+            // Si hay error, inicializar listas vacías para evitar errores de null
+            todasLasIdeas = new List<Idea>();
+            categoriasDisponibles = new List<string>();
+            estadosDisponibles = new List<string>();
+            procesosDisponibles = new List<string>();
+            ideasFiltradas = new List<Idea>();
+            ideasPaginadas = new List<Idea>();
+            Console.WriteLine($"Error en CargarDatos: {ex.Message}");
+        }
+    }
+
+    private void AplicarFiltros()
+    {
+        ideasFiltradas = todasLasIdeas.Where(idea =>
+            (string.IsNullOrEmpty(filtroDocumento) || idea.NumeroDocumento.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(filtroNombre) || idea.NombreUsuario.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(filtroCategoria) || idea.Categoria == filtroCategoria) &&
+            (string.IsNullOrEmpty(filtroProceso) || idea.Proceso.Contains(filtroProceso, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(filtroEstado) || idea.Estado == filtroEstado) &&
+            (string.IsNullOrEmpty(filtroRadicado) || idea.Radicado.Contains(filtroRadicado, StringComparison.OrdinalIgnoreCase)) &&
+            (!filtroFechaDesde.HasValue || (idea.FechaRegistro.Date >= filtroFechaDesde.Value.Date)) &&
+            (!filtroFechaHasta.HasValue || (idea.FechaRegistro.Date <= filtroFechaHasta.Value.Date))
+        ).ToList();
+        
+        totalPaginas = (int)Math.Ceiling((double)ideasFiltradas.Count / registrosPorPagina);
+        if (totalPaginas < 1) totalPaginas = 1;
+        if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+        
+        AplicarPaginacion();
+    }
+
+    private void AplicarPaginacion()
+    {
+        ideasPaginadas = ideasFiltradas
+            .Skip((paginaActual - 1) * registrosPorPagina)
+            .Take(registrosPorPagina)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private void CambiarPagina(int nuevaPagina)
+    {
+        if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas)
+        {
+            paginaActual = nuevaPagina;
+            AplicarPaginacion();
+        }
+    }
+
+    private void LimpiarFiltros()
+    {
+        filtroDocumento = string.Empty;
+        filtroNombre = string.Empty;
+        filtroCategoria = string.Empty;
+        filtroProceso = string.Empty;
+        filtroEstado = string.Empty;
+        filtroRadicado = string.Empty;
+        filtroFechaDesde = null;
+        filtroFechaHasta = null;
+        paginaActual = 1;
+        AplicarFiltros();
+    }
+
+    private void VerDetalle(Idea idea)
+    {
+        NavigationManager.NavigateTo($"/calificacion/{idea.Id}/ver");
+    }
+
+    private void EditarRegistro(Idea idea)
+    {
+        NavigationManager.NavigateTo($"/calificacion/{idea.Id}/editar");
+    }
+
+
+    private async Task ExportarDatos()
+    {
+        try
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Calificaciones");
+                
+                // Encabezados - TODOS los campos
+                int col = 1;
+                worksheet.Cell(1, col++).Value = "ID";
+                worksheet.Cell(1, col++).Value = "Documento";
+                worksheet.Cell(1, col++).Value = "Nombre";
+                worksheet.Cell(1, col++).Value = "Celular";
+                worksheet.Cell(1, col++).Value = "Radicado";
+                worksheet.Cell(1, col++).Value = "Fecha Radicado";
+                worksheet.Cell(1, col++).Value = "Categoría";
+                worksheet.Cell(1, col++).Value = "Proceso";
+                worksheet.Cell(1, col++).Value = "Estado";
+                worksheet.Cell(1, col++).Value = "Resumen de la Idea";
+                worksheet.Cell(1, col++).Value = "Valor Inversión";
+                worksheet.Cell(1, col++).Value = "ROI Meses";
+                worksheet.Cell(1, col++).Value = "Facilidad Implem";
+                worksheet.Cell(1, col++).Value = "Impactos (JSON)";
+                worksheet.Cell(1, col++).Value = "Puntos Extra";
+                worksheet.Cell(1, col++).Value = "Comentarios Puntos Extra";
+                worksheet.Cell(1, col++).Value = "Observaciones";
+                worksheet.Cell(1, col++).Value = "Puntos Valor Inv.";
+                worksheet.Cell(1, col++).Value = "Puntos ROI";
+                worksheet.Cell(1, col++).Value = "Puntos Fac. Implem.";
+                worksheet.Cell(1, col++).Value = "Puntos Impacto";
+                worksheet.Cell(1, col++).Value = "Puntos Totales";
+                worksheet.Cell(1, col++).Value = "Fecha Registro";
+                
+                int totalColumns = col - 1;
+                
+                // Estilo de encabezados
+                var headerRange = worksheet.Range(1, 1, 1, totalColumns);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                
+                // Datos
+                int row = 2;
+                foreach (var idea in ideasFiltradas)
+                {
+                    col = 1;
+                    worksheet.Cell(row, col++).Value = idea.Id;
+                    worksheet.Cell(row, col++).Value = idea.NumeroDocumento;
+                    worksheet.Cell(row, col++).Value = idea.NombreUsuario;
+                    worksheet.Cell(row, col++).Value = idea.Celular;
+                    worksheet.Cell(row, col++).Value = idea.Radicado;
+                    worksheet.Cell(row, col++).Value = idea.FechaRadicado?.ToString("dd/MM/yyyy") ?? "";
+                    worksheet.Cell(row, col++).Value = idea.Categoria;
+                    worksheet.Cell(row, col++).Value = idea.Proceso;
+                    worksheet.Cell(row, col++).Value = idea.Estado;
+                    worksheet.Cell(row, col++).Value = idea.DescripcionIdea;
+                    worksheet.Cell(row, col++).Value = idea.ValorInversion ?? 0;
+                    worksheet.Cell(row, col++).Value = idea.RoiMeses ?? "";
+                    worksheet.Cell(row, col++).Value = idea.FacilidadImplem ?? "";
+                    worksheet.Cell(row, col++).Value = idea.ImpactosJson ?? "{}";
+                    worksheet.Cell(row, col++).Value = idea.PuntosExtra;
+                    worksheet.Cell(row, col++).Value = idea.ComentariosPuntosExtra ?? "";
+                    worksheet.Cell(row, col++).Value = idea.Observaciones ?? "";
+                    worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosValorInversion);
+                    worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosROI);
+                    worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosFacilidadImplem);
+                    worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosImpacto);
+                    worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosTotales);
+                    worksheet.Cell(row, col++).Value = idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm");
+                    row++;
+                }
+                
+                // Ajustar ancho de columnas
+                worksheet.Columns().AdjustToContents();
+                
+                // Guardar en memoria
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    var base64 = Convert.ToBase64String(content);
+                    var fileName = $"Calificaciones_{TimeHelper.GetColombiaTime():yyyyMMdd_HHmmss}.xlsx";
+                    await JSRuntime.InvokeVoidAsync("downloadFileBase64", fileName, base64, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al exportar: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private async Task EliminarRegistro(Idea idea)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("swalConfirm", new
+        {
+            title = "¿Está seguro?",
+            text = $"¿Desea eliminar el registro ID {idea.Id} - {idea.NombreUsuario}?",
+            icon = "warning",
+            showCancelButton = true,
+            confirmButtonColor = "#dc3545",
+            cancelButtonColor = "#6c757d",
+            confirmButtonText = "Sí, eliminar",
+            cancelButtonText = "Cancelar"
+        });
+
+        if (confirmado)
+        {
+            try
+            {
+                IdeaService.DeleteIdea(idea.Id);
+                LogService.RegistrarLog("Delete", "Idea", idea.Id, nombreUsuario ?? "Sistema", 
+                    $"Calificación eliminada - ID: {idea.Id}, Documento: {idea.NumeroDocumento}, Nombre: {idea.NombreUsuario}");
+                
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Eliminado!",
+                    text = "El registro ha sido eliminado exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+                
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = $"Error al eliminar: {ex.Message}",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+        }
+    }
+}

@@ -1,0 +1,248 @@
+@page "/test-listado-calificaciones"
+@inherits AuthComponentBase
+@using CalificacionXPuntosWeb.Models
+@using CalificacionXPuntosWeb.Services
+@using CalificacionXPuntosWeb.Data
+@using Microsoft.EntityFrameworkCore
+@inject IdeaService IdeaService
+@inject ApplicationDbContext DbContext
+@inject IConfiguration Configuration
+
+<PageTitle>Test - Listado Calificaciones</PageTitle>
+
+<h3>Test - Listado Calificaciones</h3>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Información de Conexión</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Cadena de Conexión:</strong> @connectionString</p>
+        <p><strong>Estado de Conexión:</strong> <span class="badge @(conexionExitosa ? "bg-success" : "bg-danger")">@(conexionExitosa ? "Conectado" : "Desconectado")</span></p>
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger">
+                <strong>Error:</strong> @mensajeError
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Consulta Directa a BD</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Total de registros en RegistrosCalificacion:</strong> @totalRegistrosBD</p>
+        <p><strong>Total de registros desde IdeaService:</strong> @totalRegistrosService</p>
+        <p><strong>Total de registros después de normalización:</strong> @totalRegistrosNormalizados</p>
+        
+        @if (registrosBD.Any())
+        {
+            <h6>Primeros 5 registros de la BD (raw):</h6>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Documento</th>
+                        <th>Nombre</th>
+                        <th>Categoria</th>
+                        <th>Celular</th>
+                        <th>DescripcionIdea</th>
+                        <th>FechaCreacion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in registrosBD.Take(5))
+                    {
+                        <tr>
+                            <td>@reg.Id</td>
+                            <td>@(reg.Documento ?? "NULL")</td>
+                            <td>@(reg.Nombre ?? "NULL")</td>
+                            <td>@(reg.Categoria ?? "NULL")</td>
+                            <td>@(reg.Celular ?? "NULL")</td>
+                            <td>@(reg.DescripcionIdea != null ? (reg.DescripcionIdea.Length > 50 ? reg.DescripcionIdea.Substring(0, 50) : reg.DescripcionIdea) : "NULL")</td>
+                            <td>@(reg.FechaCreacion?.ToString("dd/MM/yyyy HH:mm") ?? "NULL")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Registros desde IdeaService</h5>
+    </div>
+    <div class="card-body">
+        @if (ideasService.Any())
+        {
+            <h6>Primeros 5 registros desde IdeaService:</h6>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>NumeroDocumento</th>
+                        <th>NombreUsuario</th>
+                        <th>Categoria</th>
+                        <th>Celular</th>
+                        <th>DescripcionIdea</th>
+                        <th>FechaRegistro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var idea in ideasService.Take(5))
+                    {
+                        <tr>
+                            <td>@idea.Id</td>
+                            <td>@idea.NumeroDocumento</td>
+                            <td>@idea.NombreUsuario</td>
+                            <td>@idea.Categoria</td>
+                            <td>@idea.Celular</td>
+                            <td>@(idea.DescripcionIdea != null ? (idea.DescripcionIdea.Length > 50 ? idea.DescripcionIdea.Substring(0, 50) : idea.DescripcionIdea) : "")</td>
+                            <td>@idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-warning">No se encontraron registros desde IdeaService.</p>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Logs de Debug</h5>
+    </div>
+    <div class="card-body">
+        <pre>@logsDebug</pre>
+    </div>
+</div>
+
+<button class="btn btn-primary" @onclick="ProbarConexion">Probar Conexión y Consultar</button>
+
+@code {
+    private string connectionString = string.Empty;
+    private bool conexionExitosa = false;
+    private string mensajeError = string.Empty;
+    private int totalRegistrosBD = 0;
+    private int totalRegistrosService = 0;
+    private int totalRegistrosNormalizados = 0;
+    private List<RegistroRaw> registrosBD = new();
+    private List<Idea> ideasService = new();
+    private string logsDebug = string.Empty;
+
+    private class RegistroRaw
+    {
+        public int Id { get; set; }
+        public string? Documento { get; set; }
+        public string? Nombre { get; set; }
+        public string? Categoria { get; set; }
+        public string? Celular { get; set; }
+        public string? DescripcionIdea { get; set; }
+        public DateTime? FechaCreacion { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RequiereAutenticacion();
+        
+        // Obtener cadena de conexión
+        connectionString = Configuration.GetConnectionString("DefaultConnection") ?? "No encontrada";
+        
+        ProbarConexion();
+    }
+
+    private void ProbarConexion()
+    {
+        logsDebug = "";
+        mensajeError = "";
+        conexionExitosa = false;
+        registrosBD.Clear();
+        ideasService.Clear();
+        
+        try
+        {
+            logsDebug += "Iniciando prueba de conexión...\n";
+            
+            // Probar conexión
+            conexionExitosa = DbContext.Database.CanConnect();
+            logsDebug += $"CanConnect(): {conexionExitosa}\n";
+            
+            if (conexionExitosa)
+            {
+                // Contar total de registros
+                try
+                {
+                    var count = DbContext.Ideas.Count();
+                    totalRegistrosBD = count;
+                    logsDebug += $"Total de registros en BD (desde DbSet): {count}\n";
+                }
+                catch (Exception ex)
+                {
+                    logsDebug += $"Error al contar registros: {ex.Message}\n";
+                }
+                
+                // Consulta directa a la tabla usando DbSet
+                try
+                {
+                    var ideas = DbContext.Ideas.Take(100).ToList();
+                    registrosBD = ideas.Select(i => new RegistroRaw
+                    {
+                        Id = i.Id,
+                        Documento = i.NumeroDocumento,
+                        Nombre = i.NombreUsuario,
+                        Categoria = i.Categoria,
+                        Celular = i.Celular,
+                        DescripcionIdea = i.DescripcionIdea,
+                        FechaCreacion = i.FechaRegistro
+                    }).ToList();
+                    logsDebug += $"Consulta desde DbSet: {registrosBD.Count} registros encontrados\n";
+                }
+                catch (Exception ex)
+                {
+                    logsDebug += $"Error en consulta desde DbSet: {ex.Message}\n";
+                    logsDebug += $"Stack trace: {ex.StackTrace}\n";
+                    mensajeError = ex.Message;
+                }
+                
+                // Probar IdeaService
+                try
+                {
+                    ideasService = IdeaService.GetAllIdeas();
+                    totalRegistrosService = ideasService.Count;
+                    logsDebug += $"IdeaService.GetAllIdeas(): {totalRegistrosService} registros\n";
+                    
+                    // Contar después de normalización
+                    totalRegistrosNormalizados = ideasService.Count;
+                    logsDebug += $"Registros después de normalización: {totalRegistrosNormalizados}\n";
+                }
+                catch (Exception ex)
+                {
+                    logsDebug += $"Error en IdeaService.GetAllIdeas(): {ex.Message}\n";
+                    logsDebug += $"Stack trace: {ex.StackTrace}\n";
+                    mensajeError = ex.Message;
+                }
+            }
+            else
+            {
+                mensajeError = "No se pudo conectar a la base de datos";
+                logsDebug += "No se pudo conectar a la base de datos\n";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+            logsDebug += $"Error general: {ex.Message}\n";
+            logsDebug += $"Stack trace: {ex.StackTrace}\n";
+        }
+        
+        StateHasChanged();
+    }
+}
+
