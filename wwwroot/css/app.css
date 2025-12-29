@@ -75,3 +75,15 @@ a, .btn-link {
         content: "Ha ocurrido un error";
     }
 
+/* Ocultar completamente el modal de reconexión de Blazor Server */
+.components-reconnect-modal,
+.components-reconnect-show,
+.components-reconnect-hide,
+.components-reconnect-failed,
+.components-reconnect-rejected {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
