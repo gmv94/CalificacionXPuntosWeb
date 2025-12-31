@@ -8,6 +8,7 @@
 @inject IdeaService IdeaService
 @inject PuntosHistoricosService PuntosHistoricosService
 @inject ValorPuntosService ValorPuntosService
+@inject ConfiguracionPuntosService ConfiguracionPuntosService
 @inject AuthService AuthServiceAdmin
 @inject LogService LogService
 
@@ -17,39 +18,44 @@
 
 <div class="row">
     <div class="col-md-12">
-        <ul class="nav nav-tabs mb-3" role="tablist">
+        <ul class="nav nav-tabs mb-3" role="tablist" style="font-size: 1.1rem;">
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "categorias" ? "active" : "")" @onclick='() => CambiarTab("categorias")'>
+                <button class="nav-link @(tabActivo == "categorias" ? "active" : "")" @onclick='() => CambiarTab("categorias")' style="font-weight: @(tabActivo == "categorias" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Categorías
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "estados" ? "active" : "")" @onclick='() => CambiarTab("estados")'>
+                <button class="nav-link @(tabActivo == "estados" ? "active" : "")" @onclick='() => CambiarTab("estados")' style="font-weight: @(tabActivo == "estados" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Estados
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "procesos" ? "active" : "")" @onclick='() => CambiarTab("procesos")'>
+                <button class="nav-link @(tabActivo == "procesos" ? "active" : "")" @onclick='() => CambiarTab("procesos")' style="font-weight: @(tabActivo == "procesos" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Procesos
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "puntos-historicos" ? "active" : "")" @onclick='() => CambiarTab("puntos-historicos")'>
+                <button class="nav-link @(tabActivo == "puntos-historicos" ? "active" : "")" @onclick='() => CambiarTab("puntos-historicos")' style="font-weight: @(tabActivo == "puntos-historicos" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Puntos Históricos
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "valor-puntos" ? "active" : "")" @onclick='() => CambiarTab("valor-puntos")'>
+                <button class="nav-link @(tabActivo == "valor-puntos" ? "active" : "")" @onclick='() => CambiarTab("valor-puntos")' style="font-weight: @(tabActivo == "valor-puntos" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Valor Puntos
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "usuarios" ? "active" : "")" @onclick='() => CambiarTab("usuarios")'>
+                <button class="nav-link @(tabActivo == "configuracion-puntos" ? "active" : "")" @onclick='() => CambiarTab("configuracion-puntos")' style="font-weight: @(tabActivo == "configuracion-puntos" ? "600" : "400"); padding: 0.75rem 1.25rem;">
+                    Configuración Puntos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(tabActivo == "usuarios" ? "active" : "")" @onclick='() => CambiarTab("usuarios")' style="font-weight: @(tabActivo == "usuarios" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Gestión de Usuarios
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(tabActivo == "logs" ? "active" : "")" @onclick='() => CambiarTab("logs")'>
+                <button class="nav-link @(tabActivo == "logs" ? "active" : "")" @onclick='() => CambiarTab("logs")' style="font-weight: @(tabActivo == "logs" ? "600" : "400"); padding: 0.75rem 1.25rem;">
                     Logs
                 </button>
             </li>
@@ -333,7 +339,7 @@
                                     @foreach (var log in logs)
                                     {
                                         <tr>
-                                            <td>@log.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                            <td>@TimeHelper.ToColombiaTime(log.Fecha).ToString("dd/MM/yyyy HH:mm:ss")</td>
                                             <td><span class="badge bg-@(log.Tipo == "Login" ? "success" : log.Tipo == "Delete" ? "danger" : "primary")">@log.Tipo</span></td>
                                             <td>@log.Entidad</td>
                                             <td>@log.Usuario</td>
@@ -347,6 +353,74 @@
                     else
                     {
                         <p>No hay logs registrados.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (tabActivo == "configuracion-puntos")
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Configuración de Puntos</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="NuevaConfiguracionPuntos">
+                        <i class="bi bi-plus-circle"></i> Nueva Configuración
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Filtrar por Tipo:</label>
+                        <select class="form-select" @onchange="OnFiltroTipoConfigChanged">
+                            <option value="">Todos</option>
+                            <option value="ValorInversion">Valor Inversión</option>
+                            <option value="ROI">ROI</option>
+                            <option value="FacilidadImplem">Facilidad Implem.</option>
+                        </select>
+                    </div>
+                    @if (configuracionesPuntos != null && configuracionesPuntos.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Porcentaje</th>
+                                    <th>Valor Base</th>
+                                    <th>% Fijos</th>
+                                    <th>Orden</th>
+                                    <th>Estado</th>
+                                    <th><i class="bi bi-gear"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var config in configuracionesPuntos)
+                                {
+                                    <tr>
+                                        <td>@config.Id</td>
+                                        <td>@config.Tipo</td>
+                                        <td>@config.Valor</td>
+                                        <td>@config.Porcentaje%</td>
+                                        <td>@config.ValorBase.ToString("N0")</td>
+                                        <td>@(config.PorcentajeFijos * 100)%</td>
+                                        <td>@config.Orden</td>
+                                        <td>@(config.Activo ? "Activo" : "Inactivo")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => EditarConfiguracionPuntos(config)">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarConfiguracionPuntos(config.Id)">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No hay configuraciones registradas.</p>
                     }
                 </div>
             </div>
@@ -614,6 +688,62 @@
     </div>
 }
 
+<!-- Modal para Configuración de Puntos -->
+@if (mostrarModalConfiguracionPuntos)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(configuracionPuntosEditando?.Id > 0 ? "Editar" : "Nueva") Configuración de Puntos</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalConfiguracionPuntos"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo:</label>
+                        <InputSelect class="form-select" @bind-Value="configuracionPuntosEditando!.Tipo">
+                            <option value="ValorInversion">Valor Inversión</option>
+                            <option value="ROI">ROI</option>
+                            <option value="FacilidadImplem">Facilidad Implem.</option>
+                        </InputSelect>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor:</label>
+                        <InputText class="form-control" @bind-Value="configuracionPuntosEditando!.Valor" placeholder="Ej: <=10M, A, <=3, etc." />
+                        <small class="text-muted">Para Valor Inversión: &lt;=10M, &gt;10M&lt;=20M, &gt;20M. Para ROI: &lt;=3, &gt;3&lt;=6, &gt;6, N/A. Para Facilidad: A, B, C</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Porcentaje (%):</label>
+                        <InputNumber class="form-control" @bind-Value="configuracionPuntosEditando!.Porcentaje" min="0" max="100" step="0.01" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor Base:</label>
+                        <InputNumber class="form-control" @bind-Value="configuracionPuntosEditando!.ValorBase" min="0" step="1" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Porcentaje Fijos:</label>
+                        <InputNumber class="form-control" @bind-Value="configuracionPuntosEditando!.PorcentajeFijos" min="0" max="1" step="0.0001" />
+                        <small class="text-muted">Ejemplo: 0.10 para 10%</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Orden:</label>
+                        <InputNumber class="form-control" @bind-Value="configuracionPuntosEditando!.Orden" min="0" />
+                        <small class="text-muted">Orden de evaluación (menor = primero)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activo:</label>
+                        <InputCheckbox @bind-Value="configuracionPuntosEditando.Activo" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalConfiguracionPuntos">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarConfiguracionPuntos">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Modal para Cambiar Contraseña -->
 @if (mostrarModalCambiarContrasena)
 {
@@ -657,6 +787,7 @@
     private List<EstadoBD> estados = new();
     private List<ProcesoBD> procesos = new();
     private List<ValorPuntos> valoresPuntos = new();
+    private List<ConfiguracionPuntos> configuracionesPuntos = new();
     private List<Usuario> usuarios = new();
     private List<Log> logs = new();
     
@@ -664,13 +795,17 @@
     private bool mostrarModalEstado = false;
     private bool mostrarModalProceso = false;
     private bool mostrarModalValorPuntos = false;
+    private bool mostrarModalConfiguracionPuntos = false;
     private bool mostrarModalUsuario = false;
     private bool mostrarModalCambiarContrasena = false;
+    
+    private string filtroTipoConfig = "";
     
     private CategoriaBD categoriaEditando = new();
     private EstadoBD estadoEditando = new();
     private ProcesoBD procesoEditando = new();
     private ValorPuntos valorPuntosEditando = new();
+    private ConfiguracionPuntos configuracionPuntosEditando = new();
     private Usuario? usuarioEditando = null;
     private int usuarioIdCambiarContrasena = 0;
     private string nombreUsuarioCambiarContrasena = string.Empty;
@@ -736,6 +871,12 @@
         {
             todosLosUsuarios = new List<string>();
         }
+    }
+
+    private void OnFiltroTipoConfigChanged(ChangeEventArgs e)
+    {
+        filtroTipoConfig = e.Value?.ToString() ?? "";
+        CargarConfiguracionesPuntos();
     }
 
     private void CambiarTab(string tab)
@@ -1272,6 +1413,156 @@
                     confirmButtonText = "Aceptar"
                 });
             }
+        }
+    }
+
+    // Configuración de Puntos
+    private void CargarConfiguracionesPuntos()
+    {
+        try
+        {
+            var todas = ConfiguracionPuntosService.GetAllConfiguraciones();
+            if (string.IsNullOrWhiteSpace(filtroTipoConfig))
+            {
+                configuracionesPuntos = todas;
+            }
+            else
+            {
+                configuracionesPuntos = todas.Where(c => c.Tipo == filtroTipoConfig).ToList();
+            }
+        }
+        catch
+        {
+            configuracionesPuntos = new List<ConfiguracionPuntos>();
+        }
+    }
+
+    private void NuevaConfiguracionPuntos()
+    {
+        configuracionPuntosEditando = new ConfiguracionPuntos
+        {
+            Tipo = "ValorInversion",
+            ValorBase = 22000m,
+            PorcentajeFijos = 0.10m,
+            Activo = true,
+            Orden = 1
+        };
+        mostrarModalConfiguracionPuntos = true;
+    }
+
+    private void EditarConfiguracionPuntos(ConfiguracionPuntos config)
+    {
+        configuracionPuntosEditando = new ConfiguracionPuntos
+        {
+            Id = config.Id,
+            Tipo = config.Tipo,
+            Valor = config.Valor,
+            Porcentaje = config.Porcentaje,
+            ValorBase = config.ValorBase,
+            PorcentajeFijos = config.PorcentajeFijos,
+            Activo = config.Activo,
+            Orden = config.Orden
+        };
+        mostrarModalConfiguracionPuntos = true;
+    }
+
+    private void CerrarModalConfiguracionPuntos()
+    {
+        mostrarModalConfiguracionPuntos = false;
+        configuracionPuntosEditando = new ConfiguracionPuntos();
+    }
+
+    private async Task GuardarConfiguracionPuntos()
+    {
+        if (string.IsNullOrWhiteSpace(configuracionPuntosEditando.Tipo))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "El tipo es requerido.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(configuracionPuntosEditando.Valor))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "El valor es requerido.",
+                confirmButtonText = "Aceptar"
+            });
+            return;
+        }
+
+        try
+        {
+            if (configuracionPuntosEditando.Id > 0)
+            {
+                ConfiguracionPuntosService.UpdateConfiguracion(configuracionPuntosEditando);
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Configuración actualizada exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+            else
+            {
+                ConfiguracionPuntosService.AddConfiguracion(configuracionPuntosEditando);
+                await JSRuntime.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "¡Éxito!",
+                    text = "Configuración creada exitosamente.",
+                    confirmButtonText = "Aceptar"
+                });
+            }
+            CargarConfiguracionesPuntos();
+            CerrarModalConfiguracionPuntos();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al guardar: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
+        }
+    }
+
+    private async Task EliminarConfiguracionPuntos(int id)
+    {
+        var confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar esta configuración?");
+        if (!confirmado) return;
+
+        try
+        {
+            ConfiguracionPuntosService.DeleteConfiguracion(id);
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "success",
+                title = "¡Éxito!",
+                text = "Configuración eliminada exitosamente.",
+                confirmButtonText = "Aceptar"
+            });
+            CargarConfiguracionesPuntos();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = $"Error al eliminar: {ex.Message}",
+                confirmButtonText = "Aceptar"
+            });
         }
     }
 

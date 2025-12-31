@@ -46,6 +46,14 @@ namespace CalificacionXPuntosWeb.Services
 
         public void AddIdea(Idea idea)
         {
+            // Asegurar que los campos numéricos que no permiten NULL tengan valores válidos
+            // PuntosExtra ahora permite NULL, así que no se valida
+            if (idea.PuntosValorInversion < 0) idea.PuntosValorInversion = 0;
+            if (idea.PuntosROI < 0) idea.PuntosROI = 0;
+            if (idea.PuntosFacilidadImplem < 0) idea.PuntosFacilidadImplem = 0;
+            if (idea.PuntosImpacto < 0) idea.PuntosImpacto = 0;
+            if (idea.PuntosTotales < 0) idea.PuntosTotales = 0;
+            
             _context.Ideas.Add(idea);
             _context.SaveChanges();
         }

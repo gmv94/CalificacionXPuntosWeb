@@ -19,6 +19,7 @@ namespace CalificacionXPuntosWeb.Data
         public DbSet<ProcesoBD> Procesos { get; set; }
         public DbSet<PuntosHistoricos> PuntosHistoricos { get; set; }
         public DbSet<ValorPuntos> ValorPuntos { get; set; }
+        public DbSet<ConfiguracionPuntos> ConfiguracionPuntos { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Log> Logs { get; set; }
 
@@ -33,16 +34,16 @@ namespace CalificacionXPuntosWeb.Data
                 entity.HasKey(e => e.Id);
                 
                 // Mapear columnas según el esquema existente de RegistrosCalificacion
-                entity.Property(e => e.NumeroDocumento).HasColumnName("Documento").HasMaxLength(50).IsRequired(false);
-                entity.Property(e => e.NombreUsuario).HasColumnName("Nombre").HasMaxLength(200).IsRequired(false);
-                entity.Property(e => e.Radicado).HasMaxLength(50).IsRequired(false);
+                entity.Property(e => e.NumeroDocumento).HasColumnName("Documento").HasMaxLength(50).IsRequired();
+                entity.Property(e => e.NombreUsuario).HasColumnName("Nombre").HasMaxLength(200).IsRequired();
+                entity.Property(e => e.Radicado).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.Categoria).HasMaxLength(100).IsRequired(false);
                 entity.Property(e => e.Proceso).HasMaxLength(100).IsRequired(false);
-                entity.Property(e => e.Estado).HasMaxLength(50).IsRequired(false);
+                entity.Property(e => e.Estado).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.ValorInversion).HasColumnName("ValorInversion").HasColumnType("decimal(18,2)").IsRequired(false);
                 entity.Property(e => e.RoiMeses).HasColumnName("RoiMeses").HasMaxLength(20).IsRequired(false);
                 entity.Property(e => e.FacilidadImplem).HasColumnName("FacilidadImplem").HasMaxLength(10).IsRequired(false);
-                entity.Property(e => e.PuntosExtra).HasColumnName("PuntosExtra").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
+                entity.Property(e => e.PuntosExtra).HasColumnName("PuntosExtra").HasColumnType("decimal(18,2)").IsRequired(false);
                 entity.Property(e => e.ComentariosPuntosExtra).HasColumnName("ComentariosPuntosExtra").HasMaxLength(500).IsRequired(false);
                 entity.Property(e => e.Observaciones).HasMaxLength(1000).IsRequired(false);
                 entity.Property(e => e.PuntosValorInversion).HasColumnName("PuntosValorInversion").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
@@ -56,8 +57,8 @@ namespace CalificacionXPuntosWeb.Data
                 
                 // Mapear campos adicionales
                 entity.Property(e => e.Celular).HasMaxLength(20).IsRequired(false);
-                entity.Property(e => e.DescripcionIdea).HasColumnName("DescripcionIdea").HasMaxLength(4000).IsRequired(false);
-                entity.Property(e => e.FechaRadicado).HasColumnName("FechaRadicado").HasColumnType("datetime2").IsRequired(false);
+                entity.Property(e => e.DescripcionIdea).HasColumnName("DescripcionIdea").HasMaxLength(4000).IsRequired();
+                entity.Property(e => e.FechaRadicado).HasColumnName("FechaRadicado").HasColumnType("datetime2").IsRequired();
                 entity.Property(e => e.ImpactosJson).HasColumnName("ImpactosJson").HasMaxLength(4000).IsRequired(false);
                 
                 // Ignorar campos calculados o no mapeables
@@ -88,6 +89,20 @@ namespace CalificacionXPuntosWeb.Data
                 entity.Property(e => e.CostoMinimo).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(e => e.CostoMaximo).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(e => e.ValorPorPunto).HasColumnType("decimal(18,2)").IsRequired();
+            });
+
+            // Configuración de ConfiguracionPuntos
+            modelBuilder.Entity<ConfiguracionPuntos>(entity =>
+            {
+                entity.ToTable("ConfiguracionPuntos");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Tipo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Valor).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Porcentaje).HasColumnType("decimal(5,2)").IsRequired();
+                entity.Property(e => e.ValorBase).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(22000m);
+                entity.Property(e => e.PorcentajeFijos).HasColumnType("decimal(5,4)").IsRequired().HasDefaultValue(0.10m);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.Orden).IsRequired().HasDefaultValue(0);
             });
 
             // Configuración de Usuario

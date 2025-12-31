@@ -1,0 +1,381 @@
+@{
+    ViewData["Title"] = "Test - Crear Calificación";
+    var categorias = ViewBag.Categorias as List<string> ?? new List<string>();
+    var estados = ViewBag.Estados as List<string> ?? new List<string>();
+    var procesos = ViewBag.Procesos as List<string> ?? new List<string>();
+}
+
+<h3>Test - Crear Calificación</h3>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Esta es una página de prueba para diagnosticar el problema de creación de calificaciones.
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4 style="font-size: calc(1.25rem);">Nuevo Registro</h4>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/Home/GuardarCalificacion?modo=crear" id="formCalificacion" novalidate>
+            <input type="hidden" name="Id" value="0" />
+            <input type="hidden" name="FechaRegistro" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")" />
+            <input type="hidden" name="ImpactosJson" id="impactosJson" value="{}" />
+            
+            <!-- Información Básica -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Información Básica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="numeroDocumento" class="form-label">Documento: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="numeroDocumento" name="NumeroDocumento" value="" maxlength="50" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombreUsuario" class="form-label">Nombre: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombreUsuario" name="NombreUsuario" value="" maxlength="200" required />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="celular" class="form-label">Celular:</label>
+                            <input type="text" class="form-control" id="celular" name="Celular" value="" placeholder="Ej: 3001234567" maxlength="20" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="proceso" class="form-label">Proceso:</label>
+                            <select class="form-select" id="proceso" name="Proceso">
+                                <option value="">Seleccione...</option>
+                                <option value="N/A">N/A</option>
+                                @foreach (var proc in procesos)
+                                {
+                                    <option value="@proc">@proc</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="categoria" class="form-label">Categoría:</label>
+                            <select class="form-select" id="categoria" name="Categoria" onchange="onCategoriaChanged()">
+                                <option value="">Seleccione...</option>
+                                @foreach (var cat in categorias)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estado" class="form-label">Estado: <span class="text-danger">*</span></label>
+                            <select class="form-select" id="estado" name="Estado" required>
+                                <option value="">Seleccione...</option>
+                                @foreach (var est in estados)
+                                {
+                                    <option value="@est">@est</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="radicado" class="form-label">Radicado: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="radicado" name="Radicado" value="" maxlength="50" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaRadicado" class="form-label">Fecha Radicado: <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fechaRadicado" name="FechaRadicado" value="" required />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="descripcionIdea" class="form-label">Resumen de la idea: <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="descripcionIdea" name="DescripcionIdea" rows="4" maxlength="4000" required></textarea>
+                            <small class="text-muted"><span id="contadorDescripcion">0</span> / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calificación de la Idea -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Calificación de la Idea</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="valorInversion" class="form-label">Valor Inversión:</label>
+                            <input type="text" class="form-control" id="valorInversion" value="" oninput="onValorInversionInput()" />
+                            <input type="hidden" id="valorInversionHidden" name="ValorInversion" value="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="facilidadImplem" class="form-label">Facilidad Implem.:</label>
+                            <select class="form-select" id="facilidadImplem" name="FacilidadImplem" onchange="recalcularPuntos()">
+                                <option value="">Seleccione...</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="roiMeses" class="form-label">ROI (MESES):</label>
+                            <select class="form-select" id="roiMeses" name="RoiMeses" onchange="recalcularPuntos()">
+                                <option value="">Seleccione...</option>
+                                <option value="<=3">&lt;=3</option>
+                                <option value=">3<=6">&gt;3&lt;=6</option>
+                                <option value=">6">&gt;6</option>
+                                <option value="N/A">N/A</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impactos -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Impactos</h5>
+                </div>
+                <div class="card-body" id="impactosContainer">
+                    <p class="text-muted">Seleccione una categoría para ver los impactos disponibles.</p>
+                </div>
+            </div>
+
+            <!-- Puntos Extra -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Puntos Extra</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="puntosExtra" class="form-label">Puntos Extra:</label>
+                            <input type="number" class="form-control" id="puntosExtra" name="PuntosExtra" value="" min="0" onchange="recalcularPuntos()" />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="comentariosPuntosExtra" class="form-label">Comentarios Puntos Extra:</label>
+                            <textarea class="form-control" id="comentariosPuntosExtra" name="ComentariosPuntosExtra" rows="3" maxlength="4000"></textarea>
+                            <small class="text-muted"><span id="contadorComentarios">0</span> / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Observaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="observaciones" class="form-label">Observaciones:</label>
+                            <textarea class="form-control" id="observaciones" name="Observaciones" rows="3" maxlength="4000"></textarea>
+                            <small class="text-muted"><span id="contadorObservaciones">0</span> / 4000 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de Puntos -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Resumen de Puntos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p><strong>Valor Inversión:</strong> <span id="puntosValorInversion">0</span></p>
+                            <p><strong>ROI:</strong> <span id="puntosROI">0</span></p>
+                            <p><strong>Facilidad Implem.:</strong> <span id="puntosFacilidadImplem">0</span></p>
+                            <p><strong>Impacto:</strong> <span id="puntosImpacto">0</span></p>
+                            <p><strong>Puntos Extra:</strong> <span id="puntosExtraDisplay">0</span></p>
+                            <hr />
+                            <h4><strong>Total: <span id="puntosTotales">0</span> puntos</strong></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="row">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <a href="/Home/ListadoCalificaciones" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let impactosConfig = [];
+        let impactosActuales = {};
+
+        // Cargar impactos cuando se selecciona una categoría
+        async function onCategoriaChanged() {
+            const categoria = document.getElementById('categoria').value;
+            if (!categoria) {
+                document.getElementById('impactosContainer').innerHTML = '<p class="text-muted">Seleccione una categoría para ver los impactos disponibles.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Home/GetCategoriaImpactos?nombre=${encodeURIComponent(categoria)}`);
+                const data = await response.json();
+                
+                if (data.impactos && data.impactos.length > 0) {
+                    impactosConfig = data.impactos;
+                    renderizarImpactos();
+                } else {
+                    document.getElementById('impactosContainer').innerHTML = '<div class="alert alert-info">Esta categoría no tiene impactos configurados.</div>';
+                }
+            } catch (error) {
+                console.error('Error al cargar impactos:', error);
+            }
+        }
+
+        function renderizarImpactos() {
+            const container = document.getElementById('impactosContainer');
+            let html = '<div class="row">';
+            
+            impactosConfig.forEach(impacto => {
+                const valor = impactosActuales[impacto.nombre] || 0;
+                const errorClass = valor > impacto.porcentajeMaximo ? 'border-danger' : '';
+                html += `
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">${impacto.nombre} (${impacto.porcentajeMaximo}%):</label>
+                        <input type="number" 
+                               class="form-control ${errorClass}" 
+                               id="impacto_${impacto.nombre}"
+                               value="${valor}"
+                               min="0" 
+                               max="${impacto.porcentajeMaximo}" 
+                               step="0.01"
+                               onchange="onImpactoValueChanged('${impacto.nombre}', ${impacto.porcentajeMaximo})" />
+                        ${valor > impacto.porcentajeMaximo ? `<div class="text-danger small">⚠ El valor no puede exceder ${impacto.porcentajeMaximo}%</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            recalcularPuntos();
+        }
+
+        function onImpactoValueChanged(nombre, porcentajeMaximo) {
+            const input = document.getElementById(`impacto_${nombre}`);
+            let valor = parseFloat(input.value) || 0;
+            
+            if (valor > porcentajeMaximo) {
+                valor = porcentajeMaximo;
+                input.value = valor;
+                input.classList.add('border-danger');
+            } else if (valor < 0) {
+                valor = 0;
+                input.value = valor;
+            } else {
+                input.classList.remove('border-danger');
+            }
+            
+            impactosActuales[nombre] = valor;
+            document.getElementById('impactosJson').value = JSON.stringify(impactosActuales);
+            recalcularPuntos();
+        }
+
+        function onValorInversionInput() {
+            const input = document.getElementById('valorInversion');
+            const hidden = document.getElementById('valorInversionHidden');
+            let valor = input.value.replace(/[^0-9]/g, '');
+            
+            if (valor) {
+                const numValor = parseFloat(valor);
+                hidden.value = numValor;
+                input.value = numValor.toLocaleString('es-CO');
+            } else {
+                hidden.value = 0;
+                input.value = '';
+            }
+            
+            recalcularPuntos();
+        }
+
+        async function recalcularPuntos() {
+            const valorInversion = parseFloat(document.getElementById('valorInversionHidden')?.value || 0);
+            const roiMeses = document.getElementById('roiMeses')?.value || '';
+            const facilidadImplem = document.getElementById('facilidadImplem')?.value || '';
+            const puntosExtra = parseFloat(document.getElementById('puntosExtra')?.value || 0);
+            
+            try {
+                const response = await fetch('/Home/CalcularPuntos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        valorInversion: valorInversion,
+                        roiMeses: roiMeses,
+                        facilidadImplem: facilidadImplem,
+                        puntosExtra: puntosExtra,
+                        impactos: impactosActuales,
+                        impactosConfig: impactosConfig
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error al calcular puntos:', data.error);
+                    return;
+                }
+                
+                document.getElementById('puntosValorInversion').textContent = Math.round(data.puntosValorInversion || 0);
+                document.getElementById('puntosROI').textContent = Math.round(data.puntosROI || 0);
+                document.getElementById('puntosFacilidadImplem').textContent = Math.round(data.puntosFacilidadImplem || 0);
+                document.getElementById('puntosImpacto').textContent = Math.round(data.puntosImpacto || 0);
+                document.getElementById('puntosExtraDisplay').textContent = Math.round(puntosExtra);
+                document.getElementById('puntosTotales').textContent = Math.round(data.puntosTotales || 0);
+            } catch (error) {
+                console.error('Error al recalcular puntos:', error);
+            }
+        }
+
+        // Contador de caracteres
+        document.getElementById('descripcionIdea')?.addEventListener('input', function() {
+            document.getElementById('contadorDescripcion').textContent = this.value.length;
+        });
+        document.getElementById('comentariosPuntosExtra')?.addEventListener('input', function() {
+            document.getElementById('contadorComentarios').textContent = this.value.length;
+        });
+        document.getElementById('observaciones')?.addEventListener('input', function() {
+            document.getElementById('contadorObservaciones').textContent = this.value.length;
+        });
+
+        // Agregar eventos a los campos
+        document.getElementById('categoria')?.addEventListener('change', onCategoriaChanged);
+        document.getElementById('valorInversion')?.addEventListener('input', onValorInversionInput);
+        document.getElementById('roiMeses')?.addEventListener('change', recalcularPuntos);
+        document.getElementById('facilidadImplem')?.addEventListener('change', recalcularPuntos);
+        document.getElementById('puntosExtra')?.addEventListener('change', recalcularPuntos);
+
+        // Calcular puntos iniciales
+        window.addEventListener('DOMContentLoaded', function() {
+            recalcularPuntos();
+        });
+    </script>
+}
+

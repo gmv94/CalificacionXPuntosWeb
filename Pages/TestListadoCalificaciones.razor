@@ -62,7 +62,7 @@
                             <td>@(reg.Categoria ?? "NULL")</td>
                             <td>@(reg.Celular ?? "NULL")</td>
                             <td>@(reg.DescripcionIdea != null ? (reg.DescripcionIdea.Length > 50 ? reg.DescripcionIdea.Substring(0, 50) : reg.DescripcionIdea) : "NULL")</td>
-                            <td>@(reg.FechaCreacion?.ToString("dd/MM/yyyy HH:mm") ?? "NULL")</td>
+                            <td>@(reg.FechaCreacion.HasValue ? TimeHelper.ToColombiaTime(reg.FechaCreacion.Value).ToString("dd/MM/yyyy HH:mm") : "NULL")</td>
                         </tr>
                     }
                 </tbody>
@@ -101,7 +101,7 @@
                             <td>@idea.Categoria</td>
                             <td>@idea.Celular</td>
                             <td>@(idea.DescripcionIdea != null ? (idea.DescripcionIdea.Length > 50 ? idea.DescripcionIdea.Substring(0, 50) : idea.DescripcionIdea) : "")</td>
-                            <td>@idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@TimeHelper.ToColombiaTime(idea.FechaRegistro).ToString("dd/MM/yyyy HH:mm")</td>
                         </tr>
                     }
                 </tbody>

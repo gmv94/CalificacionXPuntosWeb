@@ -1,0 +1,47 @@
+@model CalificacionXPuntosWeb.Models.Usuario
+@{
+    ViewData["Title"] = "Registrar Usuario";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h4>Registrar Nuevo Usuario</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="nombreUsuario" class="form-label">Usuario:</label>
+                            <input type="text" id="nombreUsuario" name="NombreUsuario" class="form-control" value="@Model?.NombreUsuario" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="contrasena" class="form-label">Contraseña:</label>
+                            <input type="password" id="contrasena" name="contrasena" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmarContrasena" class="form-label">Confirmar Contraseña:</label>
+                            <input type="password" id="confirmarContrasena" name="confirmarContrasena" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="rol" class="form-label">Rol:</label>
+                            <select id="rol" name="Rol" class="form-select" required>
+                                <option value="Usuario" selected="@(Model?.Rol == "Usuario")">Usuario (Consulta)</option>
+                                <option value="SuperAdmin" selected="@(Model?.Rol == "SuperAdmin")">SuperAdmin</option>
+                            </select>
+                        </div>
+                        @if (!string.IsNullOrEmpty(ViewBag.MensajeError as string))
+                        {
+                            <div class="alert alert-danger">@ViewBag.MensajeError</div>
+                        }
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Registrar</button>
+                            <a href="/" class="btn btn-secondary mt-2">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

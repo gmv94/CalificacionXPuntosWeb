@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Actualizar Contraseña";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h4>Actualizar Contraseña</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="contrasenaActual" class="form-label">Contraseña Actual:</label>
+                            <input type="password" id="contrasenaActual" name="contrasenaActual" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="nuevaContrasena" class="form-label">Nueva Contraseña:</label>
+                            <input type="password" id="nuevaContrasena" name="nuevaContrasena" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmarNuevaContrasena" class="form-label">Confirmar Nueva Contraseña:</label>
+                            <input type="password" id="confirmarNuevaContrasena" name="confirmarNuevaContrasena" class="form-control" required />
+                        </div>
+                        @if (!string.IsNullOrEmpty(ViewBag.MensajeError as string))
+                        {
+                            <div class="alert alert-danger">@ViewBag.MensajeError</div>
+                        }
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning">Actualizar Contraseña</button>
+                            <a href="/" class="btn btn-secondary mt-2">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

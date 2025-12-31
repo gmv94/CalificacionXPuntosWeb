@@ -99,12 +99,12 @@
                     </div>
                     <div class="mb-3">
                         <label for="puntosRequeridos" class="form-label">Puntos Requeridos</label>
-                        <input type="number" class="form-control" id="puntosRequeridos" @bind="premioActual.PuntosRequeridos" readonly />
-                        <small class="text-muted">Calculado automáticamente según el costo y el valor por punto configurado.</small>
+                        <input type="number" class="form-control" id="puntosRequeridos" value="@premioActual.PuntosRequeridos" @onchange="OnPuntosRequeridosChanged" min="0" />
+                        <small class="text-muted">Se calcula automáticamente según el costo, pero puede editarse manualmente si es necesario.</small>
                         @if (premioActual.Costo > 0 && premioActual.PuntosRequeridos == 0)
                         {
                             <small class="text-warning d-block mt-1">
-                                ⚠️ No se encontró un valor por punto configurado para este rango de costo. Configure un valor por punto en Administración > Valor Puntos.
+                                ⚠️ No se encontró un valor por punto configurado para este rango de costo. Configure un valor por punto en Administración > Valor Puntos o ingrese los puntos manualmente.
                             </small>
                         }
                     </div>
@@ -173,6 +173,7 @@
             FechaCreacion = TimeHelper.GetColombiaTime()
         };
         costoFormateado = string.Empty;
+        puntosRequeridosManual = null; // Resetear flag al crear nuevo
         mostrarModal = true;
     }
 
@@ -193,6 +194,7 @@
                 FechaCreacion = premio.FechaCreacion
             };
             costoFormateado = premio.Costo.ToString("N0");
+            puntosRequeridosManual = null; // Resetear flag al editar
             CalcularPuntosRequeridos();
             mostrarModal = true;
         }
@@ -213,6 +215,7 @@
             FechaCreacion = TimeHelper.GetColombiaTime()
         };
         costoFormateado = string.Empty;
+        puntosRequeridosManual = null; // Resetear flag al cerrar
     }
 
     private void OnCostoInput(ChangeEventArgs e)
@@ -242,11 +245,18 @@
         }
     }
 
+    private int? puntosRequeridosManual = null; // Guardar valor manual si fue editado
+    
     private void CalcularPuntosRequeridos()
     {
+        // Si el usuario editó manualmente, no recalcular automáticamente
+        // Solo recalcular si el campo está en 0 o si el usuario no ha editado manualmente
         if (premioActual.Costo <= 0)
         {
-            premioActual.PuntosRequeridos = 0;
+            if (puntosRequeridosManual == null)
+            {
+                premioActual.PuntosRequeridos = 0;
+            }
             StateHasChanged();
             return;
         }
@@ -256,20 +266,40 @@
             var valorPuntos = ValorPuntosService.GetValorPuntosPorCosto(premioActual.Costo);
             if (valorPuntos != null && valorPuntos.ValorPorPunto > 0)
             {
-                premioActual.PuntosRequeridos = (int)Math.Ceiling(premioActual.Costo / valorPuntos.ValorPorPunto);
+                // Solo actualizar si no fue editado manualmente o si el valor actual es 0
+                if (puntosRequeridosManual == null || premioActual.PuntosRequeridos == 0)
+                {
+                    premioActual.PuntosRequeridos = (int)Math.Ceiling(premioActual.Costo / valorPuntos.ValorPorPunto);
+                    puntosRequeridosManual = null; // Resetear flag después de calcular
+                }
             }
             else
             {
-                premioActual.PuntosRequeridos = 0;
+                if (puntosRequeridosManual == null)
+                {
+                    premioActual.PuntosRequeridos = 0;
+                }
             }
         }
         catch (Exception ex)
         {
-            // En caso de error, establecer a 0
-            premioActual.PuntosRequeridos = 0;
+            // En caso de error, establecer a 0 solo si no fue editado manualmente
+            if (puntosRequeridosManual == null)
+            {
+                premioActual.PuntosRequeridos = 0;
+            }
             Console.WriteLine($"Error al calcular puntos requeridos: {ex.Message}");
         }
         StateHasChanged();
+    }
+    
+    private void OnPuntosRequeridosChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var puntos))
+        {
+            premioActual.PuntosRequeridos = puntos;
+            puntosRequeridosManual = puntos; // Marcar como editado manualmente
+        }
     }
 
     private async Task GuardarPremio()

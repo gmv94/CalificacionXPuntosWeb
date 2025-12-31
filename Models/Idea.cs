@@ -9,12 +9,12 @@ namespace CalificacionXPuntosWeb.Models
         public string NumeroDocumento { get; set; } = string.Empty;
         public string NombreUsuario { get; set; } = string.Empty;
         public string? Celular { get; set; }
-        public string? Radicado { get; set; }
-        public DateTime? FechaRadicado { get; set; }
+        public string Radicado { get; set; } = string.Empty;
+        public DateTime FechaRadicado { get; set; }
         public string? Categoria { get; set; }
         public string? Proceso { get; set; }
-        public string? Estado { get; set; }
-        public string? DescripcionIdea { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public string DescripcionIdea { get; set; } = string.Empty;
         
         // Campos para cálculo de puntos
         public decimal? ValorInversion { get; set; }
@@ -49,16 +49,16 @@ namespace CalificacionXPuntosWeb.Models
             }
         }
         
-        public decimal PuntosExtra { get; set; }
+        public decimal? PuntosExtra { get; set; }
         public string? ComentariosPuntosExtra { get; set; }
         public string? Observaciones { get; set; }
         
         // Puntos calculados
-        public decimal PuntosValorInversion { get; set; }
-        public decimal PuntosROI { get; set; }
-        public decimal PuntosFacilidadImplem { get; set; }
-        public decimal PuntosImpacto { get; set; }
-        public decimal PuntosTotales { get; set; }
+        public decimal PuntosValorInversion { get; set; } = 0;
+        public decimal PuntosROI { get; set; } = 0;
+        public decimal PuntosFacilidadImplem { get; set; } = 0;
+        public decimal PuntosImpacto { get; set; } = 0;
+        public decimal PuntosTotales { get; set; } = 0;
         
         // Puntos totales como int para compatibilidad
         public int Puntos 

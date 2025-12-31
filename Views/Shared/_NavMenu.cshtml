@@ -1,0 +1,118 @@
+@{
+    var estaAutenticado = !string.IsNullOrEmpty(Context.Session.GetString("usuarioId"));
+    var esSuperAdmin = Context.Session.GetString("rol") == "SuperAdmin";
+    var nombreUsuario = Context.Session.GetString("nombreUsuario") ?? string.Empty;
+}
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="~/img/Logo.png" alt="Logo" style="height: 40px;" />
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" onclick="toggleNavMenu()">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="nav-scrollable" id="navMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <a class="nav-link @(Context.Request.Path == "/" || Context.Request.Path == "/Home" || Context.Request.Path == "/Home/Index" ? "active" : "")" href="/">
+                <span aria-hidden="true"></span> Inicio
+            </a>
+        </div>
+        <div class="nav-item px-3">
+            <a class="nav-link @(Context.Request.Path.Value?.Contains("/ConsultarDocumento") == true ? "active" : "")" href="/Home/ConsultarDocumento">
+                <span aria-hidden="true"></span> Consultar Documento
+            </a>
+        </div>
+        @if (estaAutenticado)
+        {
+            @if (esSuperAdmin)
+            {
+                <div class="nav-item px-3">
+                    <a class="nav-link @(Context.Request.Path.Value?.Contains("/Calificacion") == true ? "active" : "")" href="/Home/Calificacion">
+                        <span aria-hidden="true"></span> Calificación
+                    </a>
+                </div>
+            }
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/ListadoCalificaciones") == true ? "active" : "")" href="/Home/ListadoCalificaciones">
+                    <span aria-hidden="true"></span> Listado Calificaciones
+                </a>
+            </div>
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/ListadoRedimidos") == true ? "active" : "")" href="/listado-redimidos">
+                    <span aria-hidden="true"></span> Listado Redimidos
+                </a>
+            </div>
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/PuntosAcumulados") == true ? "active" : "")" href="/Home/PuntosAcumulados">
+                    <span aria-hidden="true"></span> Puntos Acumulados
+                </a>
+            </div>
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/RedencionPuntos") == true ? "active" : "")" href="/Home/RedencionPuntos">
+                    <span aria-hidden="true"></span> Redención Puntos
+                </a>
+            </div>
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/TablaPremios") == true ? "active" : "")" href="/Home/TablaPremios">
+                    <span aria-hidden="true"></span> Tabla Premios
+                </a>
+            </div>
+            @if (esSuperAdmin)
+            {
+                <div class="nav-item px-3">
+                    <a class="nav-link @(Context.Request.Path.Value?.Contains("/Administracion") == true ? "active" : "")" href="/Home/Administracion">
+                        <span aria-hidden="true"></span> Administración
+                    </a>
+                </div>
+            }
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/ActualizarContrasena") == true ? "active" : "")" href="/Home/ActualizarContrasena">
+                    <span aria-hidden="true"></span> Cambiar Contraseña
+                </a>
+            </div>
+            @if (esSuperAdmin)
+            {
+                <div class="nav-item px-3">
+                    <a class="nav-link @(Context.Request.Path.Value?.Contains("/Registro") == true ? "active" : "")" href="/Home/Registro">
+                        <span aria-hidden="true"></span> Registrar Usuario
+                    </a>
+                </div>
+            }
+            <div class="nav-item px-3">
+                <a class="nav-link" href="/Login/Logout">
+                    <span aria-hidden="true"></span> Cerrar Sesión (@nombreUsuario)
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/Login") == true ? "active" : "")" href="/Login">
+                    <span aria-hidden="true"></span> Iniciar Sesión
+                </a>
+            </div>
+        }
+    </nav>
+</div>
+
+<script>
+    function toggleNavMenu() {
+        const navMenu = document.getElementById('navMenu');
+        if (navMenu) {
+            navMenu.classList.toggle('collapse');
+        }
+    }
+
+    function collapseNavMenu() {
+        const navMenu = document.getElementById('navMenu');
+        if (navMenu) {
+            navMenu.classList.add('collapse');
+        }
+    }
+</script>
+

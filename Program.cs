@@ -1,31 +1,16 @@
 using CalificacionXPuntosWeb.Services;
 using CalificacionXPuntosWeb.Data;
 using CalificacionXPuntosWeb.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.SignalR;
 using System.Runtime.CompilerServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor(options =>
-{
-    options.DetailedErrors = true;
-    options.DisconnectedCircuitMaxRetained = 100;
-    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
-    options.MaxBufferedUnacknowledgedRenderBatches = 20;
-});
+builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
-builder.Services.Configure<HubOptions>(options =>
-{
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-    options.HandshakeTimeout = TimeSpan.FromSeconds(30);
-    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    options.MaximumReceiveMessageSize = 32 * 1024;
-});
 
 // Configurar Entity Framework
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -51,14 +36,15 @@ builder.Services.AddScoped<CategoriaService>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient();
-    var navigationManager = sp.GetRequiredService<NavigationManager>();
-    return new CategoriaService(httpClient, navigationManager);
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    return new CategoriaService(httpClient, httpContextAccessor);
 });
 builder.Services.AddScoped<CategoriaBDService>();
 builder.Services.AddScoped<EstadoBDService>();
 builder.Services.AddScoped<ProcesoBDService>();
 builder.Services.AddScoped<PuntosHistoricosService>();
 builder.Services.AddScoped<ValorPuntosService>();
+builder.Services.AddScoped<ConfiguracionPuntosService>();
 builder.Services.AddScoped<AuthService>(sp =>
 {
     var context = sp.GetRequiredService<ApplicationDbContext>();
@@ -84,14 +70,6 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
-
-// En Cloud Run, no redirigir HTTPS automáticamente
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-app.UseStaticFiles();
-app.UseRouting();
 
 // Verificar conexión y crear tablas que no existen (Premios y Redenciones)
 try
@@ -401,6 +379,28 @@ try
                 logger.LogWarning($"No se pudo crear/verificar tabla ValorPuntos: {ex.Message}");
             }
 
+            // Crear tabla ConfiguracionPuntos si no existe
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw(@"
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ConfiguracionPuntos')
+                    CREATE TABLE ConfiguracionPuntos (
+                        Id int IDENTITY(1,1) PRIMARY KEY,
+                        Tipo nvarchar(50) NOT NULL,
+                        Valor nvarchar(50) NOT NULL,
+                        Porcentaje decimal(5,2) NOT NULL,
+                        ValorBase decimal(18,2) NOT NULL DEFAULT 22000,
+                        PorcentajeFijos decimal(5,4) NOT NULL DEFAULT 0.10,
+                        Activo bit NOT NULL DEFAULT 1,
+                        Orden int NOT NULL DEFAULT 0
+                    )");
+                logger.LogInformation("Tabla ConfiguracionPuntos verificada.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning($"No se pudo crear/verificar tabla ConfiguracionPuntos: {ex.Message}");
+            }
+
             // Crear tabla Usuarios si no existe y crear usuario SuperAdmin inicial
             try
             {
@@ -440,6 +440,18 @@ try
                 {
                     var authService = scope.ServiceProvider.GetRequiredService<AuthService>();
                     var logService = scope.ServiceProvider.GetRequiredService<LogService>();
+                    var configuracionPuntosService = scope.ServiceProvider.GetRequiredService<ConfiguracionPuntosService>();
+                    
+                    // Inicializar configuraciones de puntos por defecto
+                    try
+                    {
+                        configuracionPuntosService.InicializarConfiguracionesPorDefecto();
+                        logger.LogInformation("Configuraciones de puntos inicializadas correctamente.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning($"No se pudieron inicializar las configuraciones de puntos: {ex.Message}");
+                    }
                     authService.SetLogService(logService);
                     
                     // Verificar si existe el usuario admin
@@ -539,8 +551,38 @@ catch (Exception ex)
     // Continuar de todas formas para que la app pueda iniciar
 }
 
+// En Cloud Run, no redirigir HTTPS automáticamente
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseStaticFiles();
+
+// Mapear favicon.ico a Logo.png
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/favicon.ico")
+    {
+        context.Request.Path = "/img/Logo.png";
+    }
+    await next();
+});
+
+app.UseSession();
+app.UseRouting();
+
+// Mapear rutas de MVC primero (tienen prioridad)
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Mapear Razor Pages
 app.MapRazorPages();
+
+// Mapear Blazor Hub
 app.MapBlazorHub();
+
+// Fallback solo para rutas de Blazor (solo si no es una ruta de MVC o archivo estático)
 app.MapFallbackToPage("/_Host");
 
 app.Run();

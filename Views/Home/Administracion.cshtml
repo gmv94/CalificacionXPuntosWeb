@@ -1,0 +1,948 @@
+@using CalificacionXPuntosWeb.Services
+@{
+    ViewData["Title"] = "Administración";
+    var categorias = ViewBag.Categorias as List<CalificacionXPuntosWeb.Models.CategoriaBD>;
+    var estados = ViewBag.Estados as List<CalificacionXPuntosWeb.Models.EstadoBD>;
+    var procesos = ViewBag.Procesos as List<CalificacionXPuntosWeb.Models.ProcesoBD>;
+    var valorPuntos = ViewBag.ValorPuntos as List<CalificacionXPuntosWeb.Models.ValorPuntos>;
+    var usuarios = ViewBag.Usuarios as List<CalificacionXPuntosWeb.Models.Usuario>;
+    var logs = ViewBag.Logs as List<CalificacionXPuntosWeb.Models.Log>;
+    var todosLosUsuarios = ViewBag.TodosLosUsuarios as List<string>;
+    var tabActivo = ViewBag.TabActivo as string ?? "categorias";
+}
+
+<h3>Administración</h3>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "categorias" ? "active" : "")" href="/Home/Administracion?tab=categorias">Categorías</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "estados" ? "active" : "")" href="/Home/Administracion?tab=estados">Estados</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "procesos" ? "active" : "")" href="/Home/Administracion?tab=procesos">Procesos</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "puntos-historicos" ? "active" : "")" href="/Home/Administracion?tab=puntos-historicos">Puntos Históricos</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "valor-puntos" ? "active" : "")" href="/Home/Administracion?tab=valor-puntos">Valor Puntos</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "configuracion-puntos" ? "active" : "")" href="/Home/Administracion?tab=configuracion-puntos">Configuración Puntos</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "usuarios" ? "active" : "")" href="/Home/Administracion?tab=usuarios">Gestión de Usuarios</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "logs" ? "active" : "")" href="/Home/Administracion?tab=logs">Logs</a>
+    </li>
+</ul>
+
+@if (tabActivo == "categorias")
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Categorías</h5>
+            <a href="/Home/Administracion?tab=categorias&accion=nuevo" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Nueva Categoría
+            </a>
+        </div>
+        <div class="card-body">
+            @if (categorias != null && categorias.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Impactos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cat in categorias)
+                            {
+                                <tr>
+                                    <td>@cat.Nombre</td>
+                                    <td>@(cat.Impactos?.Count(i => i.Activo) ?? 0) impacto(s)</td>
+                                    <td>@(cat.Activo ? "Activo" : "Inactivo")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=categorias&accion=editar&id=@cat.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="post" action="/Home/EliminarCategoria" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta categoría?');">
+                                            <input type="hidden" name="id" value="@cat.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No hay categorías registradas.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "estados")
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Estados</h5>
+            <a href="/Home/Administracion?tab=estados&accion=nuevo" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Nuevo Estado
+            </a>
+        </div>
+        <div class="card-body">
+            @if (estados != null && estados.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var est in estados)
+                            {
+                                <tr>
+                                    <td>@est.Nombre</td>
+                                    <td>@(est.Activo ? "Activo" : "Inactivo")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=estados&accion=editar&id=@est.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="post" action="/Home/EliminarEstado" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este estado?');">
+                                            <input type="hidden" name="id" value="@est.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No hay estados registrados.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "procesos")
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Procesos</h5>
+            <a href="/Home/Administracion?tab=procesos&accion=nuevo" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Nuevo Proceso
+            </a>
+        </div>
+        <div class="card-body">
+            @if (procesos != null && procesos.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proc in procesos)
+                            {
+                                <tr>
+                                    <td>@proc.Nombre</td>
+                                    <td>@(proc.Activo ? "Activo" : "Inactivo")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=procesos&accion=editar&id=@proc.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="post" action="/Home/EliminarProceso" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este proceso?');">
+                                            <input type="hidden" name="id" value="@proc.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No hay procesos registrados.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "puntos-historicos")
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Puntos Históricos</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="/Home/GuardarPuntosHistoricos">
+                <input type="hidden" name="Tab" value="puntos-historicos" />
+                <div class="mb-3">
+                    <label for="buscarUsuario" class="form-label">Buscar Usuario:</label>
+                    <input type="text" id="buscarUsuario" class="form-control" list="usuariosList" name="NombreUsuario" placeholder="Escriba el nombre del usuario..." required />
+                    <datalist id="usuariosList">
+                        @foreach (var usuario in todosLosUsuarios ?? new List<string>())
+                        {
+                            <option value="@usuario">@usuario</option>
+                        }
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label for="numeroDocumento" class="form-label">Número de Documento:</label>
+                    <input type="text" id="numeroDocumento" class="form-control" name="NumeroDocumento" placeholder="Se llenará automáticamente o ingrese manualmente" />
+                </div>
+                <div class="mb-3">
+                    <label for="puntosAsignar" class="form-label">Puntos a Asignar:</label>
+                    <input type="number" id="puntosAsignar" class="form-control" name="Puntos" min="1" required />
+                </div>
+                <div class="mb-3">
+                    <label for="observacionesPuntos" class="form-label">Observaciones:</label>
+                    <textarea id="observacionesPuntos" class="form-control" rows="3" name="Observaciones" maxlength="1000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save"></i> Guardar Puntos Históricos
+                </button>
+            </form>
+        </div>
+    </div>
+}
+else if (tabActivo == "valor-puntos")
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Valor de Puntos</h5>
+            <a href="/Home/Administracion?tab=valor-puntos&accion=nuevo" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Nuevo Valor Puntos
+            </a>
+        </div>
+        <div class="card-body">
+            @if (valorPuntos != null && valorPuntos.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Costo Mínimo</th>
+                                <th>Costo Máximo</th>
+                                <th>Valor por Punto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var vp in valorPuntos)
+                            {
+                                <tr>
+                                    <td>$@vp.CostoMinimo.ToString("N0")</td>
+                                    <td>$@vp.CostoMaximo.ToString("N0")</td>
+                                    <td>$@vp.ValorPorPunto.ToString("N0")</td>
+                                    <td>@(vp.Activo ? "Activo" : "Inactivo")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=valor-puntos&accion=editar&id=@vp.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="post" action="/Home/EliminarValorPuntos" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este valor de puntos?');">
+                                            <input type="hidden" name="id" value="@vp.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No hay valores de puntos configurados.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "configuracion-puntos")
+{
+    var configuracionesPuntos = ViewBag.ConfiguracionesPuntos as List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos> ?? new List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos>();
+    var filtroTipoConfig = ViewBag.FiltroTipoConfig as string ?? "";
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Configuración de Puntos</h5>
+            <a href="/Home/Administracion?tab=configuracion-puntos&accion=nuevo" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Nueva Configuración
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Filtrar por Tipo:</label>
+                <select class="form-select" onchange="window.location.href='/Home/Administracion?tab=configuracion-puntos&filtroTipo=' + this.value">
+                    <option value="">Todos</option>
+                    @if (filtroTipoConfig == "ValorInversion")
+                    {
+                        <option value="ValorInversion" selected>Valor Inversión</option>
+                    }
+                    else
+                    {
+                        <option value="ValorInversion">Valor Inversión</option>
+                    }
+                    @if (filtroTipoConfig == "ROI")
+                    {
+                        <option value="ROI" selected>ROI</option>
+                    }
+                    else
+                    {
+                        <option value="ROI">ROI</option>
+                    }
+                    @if (filtroTipoConfig == "FacilidadImplem")
+                    {
+                        <option value="FacilidadImplem" selected>Facilidad Implem.</option>
+                    }
+                    else
+                    {
+                        <option value="FacilidadImplem">Facilidad Implem.</option>
+                    }
+                </select>
+            </div>
+            @if (configuracionesPuntos.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Porcentaje</th>
+                                <th>Valor Base</th>
+                                <th>% Fijos</th>
+                                <th>Orden</th>
+                                <th>Estado</th>
+                                <th><i class="bi bi-gear"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var config in configuracionesPuntos)
+                            {
+                                <tr>
+                                    <td>@config.Id</td>
+                                    <td>@config.Tipo</td>
+                                    <td>@config.Valor</td>
+                                    <td>@config.Porcentaje%</td>
+                                    <td>@config.ValorBase.ToString("N0")</td>
+                                    <td>@(config.PorcentajeFijos * 100)%</td>
+                                    <td>@config.Orden</td>
+                                    <td>@(config.Activo ? "Activo" : "Inactivo")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=configuracion-puntos&accion=editar&id=@config.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="post" action="/Home/EliminarConfiguracionPuntos" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta configuración?');">
+                                            <input type="hidden" name="id" value="@config.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No hay configuraciones registradas.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "usuarios")
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Gestión de Usuarios</h5>
+        </div>
+        <div class="card-body">
+            @if (usuarios != null && usuarios.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Usuario</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Fecha Creación</th>
+                                <th>Último Acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in usuarios)
+                            {
+                                <tr>
+                                    <td>@usuario.Id</td>
+                                    <td>@usuario.NombreUsuario</td>
+                                    <td>@usuario.Rol</td>
+                                    <td>@(usuario.Activo ? "Activo" : "Bloqueado")</td>
+                                    <td>@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                    <td>@(usuario.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+                                    <td>
+                                        <a href="/Home/Administracion?tab=usuarios&accion=editar&id=@usuario.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <a href="/Home/Administracion?tab=usuarios&accion=cambiar-contrasena&id=@usuario.Id" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-key"></i> Cambiar Contraseña
+                                        </a>
+                                        <form method="post" action="/Home/BloquearDesbloquearUsuario" style="display:inline;" onsubmit="return confirm('¿Está seguro de @(usuario.Activo ? "bloquear" : "desbloquear") este usuario?');">
+                                            <input type="hidden" name="id" value="@usuario.Id" />
+                                            <input type="hidden" name="activo" value="@(!usuario.Activo)" />
+                                            <button type="submit" class="btn btn-sm @(usuario.Activo ? "btn-secondary" : "btn-success")">
+                                                <i class="bi bi-@(usuario.Activo ? "lock" : "unlock")"></i> @(usuario.Activo ? "Bloquear" : "Desbloquear")
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No hay usuarios registrados.</p>
+            }
+        </div>
+    </div>
+}
+else if (tabActivo == "logs")
+{
+    var paginaActual = ViewBag.PaginaActual as int? ?? 1;
+    var buscarTexto = ViewBag.BuscarTexto as string ?? "";
+    var logsFiltrados = logs?.Where(l => 
+        string.IsNullOrEmpty(buscarTexto) || 
+        l.Usuario.Contains(buscarTexto, StringComparison.OrdinalIgnoreCase) ||
+        l.Tipo.Contains(buscarTexto, StringComparison.OrdinalIgnoreCase) ||
+        l.Entidad.Contains(buscarTexto, StringComparison.OrdinalIgnoreCase) ||
+        l.Descripcion.Contains(buscarTexto, StringComparison.OrdinalIgnoreCase)
+    ).ToList() ?? new List<CalificacionXPuntosWeb.Models.Log>();
+    var totalRegistros = logsFiltrados.Count;
+    var registrosPorPagina = 50;
+    var totalPaginas = (int)Math.Ceiling((double)totalRegistros / registrosPorPagina);
+    var logsPaginados = logsFiltrados.Skip((paginaActual - 1) * registrosPorPagina).Take(registrosPorPagina).ToList();
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Logs del Sistema</h5>
+            <form method="get" action="/Home/Administracion" class="d-flex gap-2">
+                <input type="hidden" name="tab" value="logs" />
+                <input type="text" name="buscar" class="form-control form-control-sm" placeholder="Buscar..." value="@buscarTexto" style="width: 200px;" />
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                @if (!string.IsNullOrEmpty(buscarTexto))
+                {
+                    <a href="/Home/Administracion?tab=logs" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-x"></i> Limpiar
+                    </a>
+                }
+            </form>
+        </div>
+        <div class="card-body">
+            @if (logsPaginados.Any())
+            {
+                <p class="text-muted">Mostrando @((paginaActual - 1) * registrosPorPagina + 1) - @(Math.Min(paginaActual * registrosPorPagina, totalRegistros)) de @totalRegistros registros</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Entidad</th>
+                                <th>Usuario</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in logsPaginados)
+                            {
+                                <tr>
+                                    <td>@TimeHelper.ToColombiaTime(log.Fecha).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td><span class="badge bg-@(log.Tipo == "Login" ? "success" : log.Tipo == "Delete" ? "danger" : "primary")">@log.Tipo</span></td>
+                                    <td>@log.Entidad</td>
+                                    <td>@log.Usuario</td>
+                                    <td>@log.Descripcion</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if (totalPaginas > 1)
+                {
+                    <nav aria-label="Paginación de logs">
+                        <ul class="pagination justify-content-center">
+                            @if (paginaActual > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="/Home/Administracion?tab=logs&pagina=@(paginaActual - 1)&buscar=@buscarTexto">Anterior</a>
+                                </li>
+                            }
+                            @for (int i = Math.Max(1, paginaActual - 2); i <= Math.Min(totalPaginas, paginaActual + 2); i++)
+                            {
+                                <li class="page-item @(i == paginaActual ? "active" : "")">
+                                    <a class="page-link" href="/Home/Administracion?tab=logs&pagina=@i&buscar=@buscarTexto">@i</a>
+                                </li>
+                            }
+                            @if (paginaActual < totalPaginas)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="/Home/Administracion?tab=logs&pagina=@(paginaActual + 1)&buscar=@buscarTexto">Siguiente</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <p>No se encontraron logs @(string.IsNullOrEmpty(buscarTexto) ? "" : "que coincidan con la búsqueda")</p>
+            }
+        </div>
+    </div>
+}
+
+<!-- Modales para crear/editar -->
+@{
+    var accion = ViewBag.Accion as string;
+    var idEditar = ViewBag.IdEditar as int?;
+}
+
+@if (accion == "nuevo" || accion == "editar")
+{
+    @if (tabActivo == "categorias")
+    {
+        var categoriaEditando = ViewBag.CategoriaEditando as CalificacionXPuntosWeb.Models.CategoriaBD ?? new CalificacionXPuntosWeb.Models.CategoriaBD { Activo = true, Impactos = new List<CalificacionXPuntosWeb.Models.ImpactoBD>() };
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(categoriaEditando.Id > 0 ? "Editar" : "Nueva") Categoría</h5>
+                        <a href="/Home/Administracion?tab=categorias" class="btn-close" aria-label="Close"></a>
+                    </div>
+                    <form method="post" action="/Home/GuardarCategoria">
+                        <div class="modal-body">
+                            <input type="hidden" name="Id" value="@categoriaEditando.Id" />
+                            <input type="hidden" name="Tab" value="categorias" />
+                            <div class="mb-3">
+                                <label class="form-label">Nombre:</label>
+                                <input type="text" class="form-control" name="Nombre" value="@categoriaEditando.Nombre" required />
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="categoriaActivo" name="Activo" value="true" @(categoriaEditando.Activo ? "checked" : "") />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="categoriaActivo">Activo</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Impactos:</label>
+                                <button type="button" class="btn btn-sm btn-success mb-2" onclick="agregarImpacto()">
+                                    <i class="bi bi-plus"></i> Agregar Impacto
+                                </button>
+                                <div id="impactosContainer">
+                                    @if (categoriaEditando.Impactos != null && categoriaEditando.Impactos.Any())
+                                    {
+                                        @for (int i = 0; i < categoriaEditando.Impactos.Count; i++)
+                                        {
+                                            var impacto = categoriaEditando.Impactos[i];
+                                            <div class="row mb-2 impacto-row" data-index="@i">
+                                                <div class="col-md-4">
+                                                    <input type="text" class="form-control form-control-sm" name="Impactos[@i].Nombre" value="@impacto.Nombre" placeholder="Ej: Impacto Financiero" title="Nombre del impacto (ej: Impacto Financiero, Impacto Operativo, etc.)" />
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="number" class="form-control form-control-sm" name="Impactos[@i].PorcentajeMaximo" value="@impacto.PorcentajeMaximo" min="0" max="100" placeholder="% Máximo" title="Porcentaje máximo que puede tener este impacto (0-100)" />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <input type="number" class="form-control form-control-sm" name="Impactos[@i].Orden" value="@impacto.Orden" min="0" placeholder="Orden" title="Orden de visualización (número menor = aparece primero)" />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" id="impactoActivo_@i" name="Impactos[@i].Activo" value="true" @(impacto.Activo ? "checked" : "") />
+                                                        <label class="form-check-label" for="impactoActivo_@i" title="Activar/Desactivar este impacto">Activo</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removerImpacto(@i)">×</button>
+                                                </div>
+                                                <input type="hidden" name="Impactos[@i].Id" value="@impacto.Id" />
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="/Home/Administracion?tab=categorias" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else if (tabActivo == "estados")
+    {
+        var estadoEditando = ViewBag.EstadoEditando as CalificacionXPuntosWeb.Models.EstadoBD ?? new CalificacionXPuntosWeb.Models.EstadoBD { Activo = true };
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(estadoEditando.Id > 0 ? "Editar" : "Nuevo") Estado</h5>
+                        <a href="/Home/Administracion?tab=estados" class="btn-close" aria-label="Close"></a>
+                    </div>
+                    <form method="post" action="/Home/GuardarEstado">
+                        <div class="modal-body">
+                            <input type="hidden" name="Id" value="@estadoEditando.Id" />
+                            <input type="hidden" name="Tab" value="estados" />
+                            <div class="mb-3">
+                                <label class="form-label">Nombre:</label>
+                                <input type="text" class="form-control" name="Nombre" value="@estadoEditando.Nombre" required />
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="estadoActivo" name="Activo" value="true" @(estadoEditando.Activo ? "checked" : "") />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="estadoActivo">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="/Home/Administracion?tab=estados" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else if (tabActivo == "procesos")
+    {
+        var procesoEditando = ViewBag.ProcesoEditando as CalificacionXPuntosWeb.Models.ProcesoBD ?? new CalificacionXPuntosWeb.Models.ProcesoBD { Activo = true };
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(procesoEditando.Id > 0 ? "Editar" : "Nuevo") Proceso</h5>
+                        <a href="/Home/Administracion?tab=procesos" class="btn-close" aria-label="Close"></a>
+                    </div>
+                    <form method="post" action="/Home/GuardarProceso">
+                        <div class="modal-body">
+                            <input type="hidden" name="Id" value="@procesoEditando.Id" />
+                            <input type="hidden" name="Tab" value="procesos" />
+                            <div class="mb-3">
+                                <label class="form-label">Nombre:</label>
+                                <input type="text" class="form-control" name="Nombre" value="@procesoEditando.Nombre" required />
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="procesoActivo" name="Activo" value="true" @(procesoEditando.Activo ? "checked" : "") />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="procesoActivo">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="/Home/Administracion?tab=procesos" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else if (tabActivo == "valor-puntos")
+    {
+        var valorPuntosEditando = ViewBag.ValorPuntosEditando as CalificacionXPuntosWeb.Models.ValorPuntos ?? new CalificacionXPuntosWeb.Models.ValorPuntos { Activo = true };
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(valorPuntosEditando.Id > 0 ? "Editar" : "Nuevo") Valor Puntos</h5>
+                        <a href="/Home/Administracion?tab=valor-puntos" class="btn-close" aria-label="Close"></a>
+                    </div>
+                    <form method="post" action="/Home/GuardarValorPuntos">
+                        <div class="modal-body">
+                            <input type="hidden" name="Id" value="@valorPuntosEditando.Id" />
+                            <input type="hidden" name="Tab" value="valor-puntos" />
+                            <div class="mb-3">
+                                <label class="form-label">Costo Mínimo:</label>
+                                <input type="number" class="form-control" name="CostoMinimo" value="@valorPuntosEditando.CostoMinimo" min="0" step="0.01" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Costo Máximo:</label>
+                                <input type="number" class="form-control" name="CostoMaximo" value="@valorPuntosEditando.CostoMaximo" min="0" step="0.01" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Valor por Punto:</label>
+                                <input type="number" class="form-control" name="ValorPorPunto" value="@valorPuntosEditando.ValorPorPunto" min="0" step="0.01" required />
+                                <small class="text-muted">Ejemplo: Si el valor por punto es $100, entonces $1000 de costo = 10 puntos requeridos</small>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="valorPuntosActivo" name="Activo" value="true" @(valorPuntosEditando.Activo ? "checked" : "") />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="valorPuntosActivo">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="/Home/Administracion?tab=valor-puntos" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else if (tabActivo == "configuracion-puntos")
+    {
+        var configuracionPuntosEditando = ViewBag.ConfiguracionPuntosEditando as CalificacionXPuntosWeb.Models.ConfiguracionPuntos ?? new CalificacionXPuntosWeb.Models.ConfiguracionPuntos { Activo = true, ValorBase = 22000m, PorcentajeFijos = 0.10m, Orden = 1 };
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(configuracionPuntosEditando.Id > 0 ? "Editar" : "Nueva") Configuración de Puntos</h5>
+                        <a href="/Home/Administracion?tab=configuracion-puntos" class="btn-close" aria-label="Close"></a>
+                    </div>
+                    <form method="post" action="/Home/GuardarConfiguracionPuntos">
+                        <div class="modal-body">
+                            <input type="hidden" name="Id" value="@configuracionPuntosEditando.Id" />
+                            <input type="hidden" name="Tab" value="configuracion-puntos" />
+                            <div class="mb-3">
+                                <label class="form-label">Tipo:</label>
+                                <select class="form-select" name="Tipo" required>
+                                    @if (configuracionPuntosEditando.Tipo == "ValorInversion")
+                                    {
+                                        <option value="ValorInversion" selected>Valor Inversión</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="ValorInversion">Valor Inversión</option>
+                                    }
+                                    @if (configuracionPuntosEditando.Tipo == "ROI")
+                                    {
+                                        <option value="ROI" selected>ROI</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="ROI">ROI</option>
+                                    }
+                                    @if (configuracionPuntosEditando.Tipo == "FacilidadImplem")
+                                    {
+                                        <option value="FacilidadImplem" selected>Facilidad Implem.</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="FacilidadImplem">Facilidad Implem.</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Valor:</label>
+                                <input type="text" class="form-control" name="Valor" value="@configuracionPuntosEditando.Valor" placeholder="Ej: <=10M, A, <=3, etc." required />
+                                <small class="text-muted">Para Valor Inversión: &lt;=10M, &gt;10M&lt;=20M, &gt;20M. Para ROI: &lt;=3, &gt;3&lt;=6, &gt;6, N/A. Para Facilidad: A, B, C</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Porcentaje (%):</label>
+                                <input type="number" class="form-control" name="Porcentaje" value="@configuracionPuntosEditando.Porcentaje" min="0" max="100" step="0.01" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Valor Base:</label>
+                                <input type="number" class="form-control" name="ValorBase" value="@configuracionPuntosEditando.ValorBase" min="0" step="1" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Porcentaje Fijos:</label>
+                                <input type="number" class="form-control" name="PorcentajeFijos" value="@configuracionPuntosEditando.PorcentajeFijos" min="0" max="1" step="0.0001" required />
+                                <small class="text-muted">Ejemplo: 0.10 para 10%</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Orden:</label>
+                                <input type="number" class="form-control" name="Orden" value="@configuracionPuntosEditando.Orden" min="0" required />
+                                <small class="text-muted">Orden de evaluación (menor = primero)</small>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="configActivo" name="Activo" value="true" @(configuracionPuntosEditando.Activo ? "checked" : "") />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="configActivo">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="/Home/Administracion?tab=configuracion-puntos" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else if (tabActivo == "usuarios" && accion == "editar" && idEditar.HasValue)
+    {
+        var usuarioEditando = ViewBag.UsuarioEditando as CalificacionXPuntosWeb.Models.Usuario;
+        if (usuarioEditando != null)
+        {
+            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Usuario</h5>
+                            <a href="/Home/Administracion?tab=usuarios" class="btn-close" aria-label="Close"></a>
+                        </div>
+                        <form method="post" action="/Home/GuardarUsuario">
+                            <div class="modal-body">
+                                <input type="hidden" name="Id" value="@usuarioEditando.Id" />
+                                <input type="hidden" name="Tab" value="usuarios" />
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre Usuario:</label>
+                                    <input type="text" class="form-control" value="@usuarioEditando.NombreUsuario" disabled />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Rol:</label>
+                                    <select class="form-select" name="Rol" required>
+                                        @if (usuarioEditando.Rol == "Usuario")
+                                        {
+                                            <option value="Usuario" selected>Usuario</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Usuario">Usuario</option>
+                                        }
+                                        @if (usuarioEditando.Rol == "SuperAdmin")
+                                        {
+                                            <option value="SuperAdmin" selected>SuperAdmin</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="SuperAdmin">SuperAdmin</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="/Home/Administracion?tab=usuarios" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else if (tabActivo == "usuarios" && accion == "cambiar-contrasena" && idEditar.HasValue)
+    {
+        var usuarioEditando = ViewBag.UsuarioEditando as CalificacionXPuntosWeb.Models.Usuario;
+        if (usuarioEditando != null)
+        {
+            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Cambiar Contraseña</h5>
+                            <a href="/Home/Administracion?tab=usuarios" class="btn-close" aria-label="Close"></a>
+                        </div>
+                        <form method="post" action="/Home/CambiarContrasenaUsuario">
+                            <div class="modal-body">
+                                <input type="hidden" name="id" value="@usuarioEditando.Id" />
+                                <input type="hidden" name="Tab" value="usuarios" />
+                                <div class="mb-3">
+                                    <label class="form-label">Usuario:</label>
+                                    <input type="text" class="form-control" value="@usuarioEditando.NombreUsuario" disabled />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nueva Contraseña:</label>
+                                    <input type="password" class="form-control" name="nuevaContrasena" required minlength="6" />
+                                    <small class="text-muted">Mínimo 6 caracteres</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="/Home/Administracion?tab=usuarios" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<script>
+    let impactoIndex = @(ViewBag.ImpactoIndex ?? 0);
+
+    function agregarImpacto() {
+        const container = document.getElementById('impactosContainer');
+        const row = document.createElement('div');
+        row.className = 'row mb-2 impacto-row';
+        row.setAttribute('data-index', impactoIndex);
+        row.innerHTML = `
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm" name="Impactos[${impactoIndex}].Nombre" placeholder="Ej: Impacto Financiero" title="Nombre del impacto (ej: Impacto Financiero, Impacto Operativo, etc.)" />
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control form-control-sm" name="Impactos[${impactoIndex}].PorcentajeMaximo" min="0" max="100" placeholder="% Máximo" title="Porcentaje máximo que puede tener este impacto (0-100)" />
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control form-control-sm" name="Impactos[${impactoIndex}].Orden" min="0" placeholder="Orden" title="Orden de visualización (número menor = aparece primero)" />
+            </div>
+            <div class="col-md-2">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="impactoActivo_${impactoIndex}" name="Impactos[${impactoIndex}].Activo" value="true" checked />
+                    <label class="form-check-label" for="impactoActivo_${impactoIndex}" title="Activar/Desactivar este impacto">Activo</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removerImpacto(${impactoIndex})">×</button>
+            </div>
+            <input type="hidden" name="Impactos[${impactoIndex}].Id" value="0" />
+        `;
+        container.appendChild(row);
+        impactoIndex++;
+    }
+
+    function removerImpacto(index) {
+        const row = document.querySelector(`.impacto-row[data-index="${index}"]`);
+        if (row) {
+            row.remove();
+        }
+    }
+</script>

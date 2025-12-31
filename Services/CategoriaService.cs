@@ -1,6 +1,6 @@
 using System.Text.Json;
 using CalificacionXPuntosWeb.Models;
-using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http;
 
 namespace CalificacionXPuntosWeb.Services
 {
@@ -8,20 +8,21 @@ namespace CalificacionXPuntosWeb.Services
     {
         private ConfiguracionCategorias? _configuracion;
         private readonly HttpClient _httpClient;
-        private readonly NavigationManager _navigationManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CategoriaService(HttpClient httpClient, NavigationManager navigationManager)
+        public CategoriaService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
-            _navigationManager = navigationManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task CargarCategoriasAsync()
         {
             try
             {
-                var baseUrl = _navigationManager.BaseUri;
-                var jsonUrl = $"{baseUrl}categorias.json";
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+                var jsonUrl = $"{baseUrl}/categorias.json";
                 var json = await _httpClient.GetStringAsync(jsonUrl);
                 _configuracion = JsonSerializer.Deserialize<ConfiguracionCategorias>(json, new JsonSerializerOptions
                 {

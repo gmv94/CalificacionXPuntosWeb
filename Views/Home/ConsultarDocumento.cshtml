@@ -1,12 +1,13 @@
-@page "/consultar-documento"
-@using CalificacionXPuntosWeb.Models
 @using CalificacionXPuntosWeb.Services
-@inject IdeaService IdeaService
-@inject RedencionService RedencionService
-@inject PuntosHistoricosService PuntosHistoricosService
-@inject IJSRuntime JSRuntime
-
-<PageTitle>Consultar por Documento</PageTitle>
+@{
+    ViewData["Title"] = "Consultar por Documento";
+    var puntosUsuario = ViewBag.PuntosUsuario as CalificacionXPuntosWeb.Models.PuntosAcumulados;
+    var redencionesUsuario = ViewBag.RedencionesUsuario as List<CalificacionXPuntosWeb.Models.Redencion>;
+    var puntosHistoricosUsuario = ViewBag.PuntosHistoricosUsuario as List<CalificacionXPuntosWeb.Models.PuntosHistoricos>;
+    var puntosDisponibles = ViewBag.PuntosDisponibles as int? ?? 0;
+    var puntosUtilizados = ViewBag.PuntosUtilizados as int? ?? 0;
+    var numeroDocumento = ViewBag.NumeroDocumento as string ?? "";
+}
 
 <h3>Consultar por Número de Documento</h3>
 
@@ -17,13 +18,15 @@
                 <h5>Buscar Usuario</h5>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <label for="numeroDocumento" class="form-label">Número de Documento</label>
-                    <input type="text" class="form-control" id="numeroDocumento" @bind="numeroDocumentoBuscar" @onkeypress="HandleKeyPress" />
-                </div>
-                <button class="btn btn-primary" @onclick="BuscarUsuario">
-                    <i class="bi bi-search"></i> Buscar
-                </button>
+                <form method="post" action="/Home/ConsultarDocumento">
+                    <div class="mb-3">
+                        <label for="numeroDocumento" class="form-label">Número de Documento</label>
+                        <input type="text" class="form-control" id="numeroDocumento" name="numeroDocumento" value="@numeroDocumento" onkeypress="if(event.key === 'Enter') { this.form.submit(); }" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -215,62 +218,12 @@
     </div>
 }
 
-@if (!string.IsNullOrEmpty(mensaje))
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje as string))
 {
-    <div class="alert alert-@(esExito ? "success" : "danger") alert-dismissible fade show mt-3" role="alert">
-        @mensaje
-        <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+    <div class="alert alert-@(ViewBag.EsExito == true ? "success" : "danger") alert-dismissible fade show mt-3" role="alert">
+        @ViewBag.Mensaje
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
-@code {
-    private string numeroDocumentoBuscar = string.Empty;
-    private Models.PuntosAcumulados? puntosUsuario;
-    private List<Redencion>? redencionesUsuario;
-    private List<PuntosHistoricos>? puntosHistoricosUsuario;
-    private int puntosDisponibles = 0;
-    private int puntosUtilizados = 0;
-    private string mensaje = string.Empty;
-    private bool esExito = false;
-
-    private void BuscarUsuario()
-    {
-        if (string.IsNullOrWhiteSpace(numeroDocumentoBuscar))
-        {
-            mensaje = "Por favor ingrese un número de documento.";
-            esExito = false;
-            return;
-        }
-
-        puntosUsuario = IdeaService.GetPuntosAcumuladosPorDocumento(numeroDocumentoBuscar);
-        
-        if (puntosUsuario == null)
-        {
-            mensaje = "No se encontraron registros para este documento.";
-            esExito = false;
-            puntosUsuario = null;
-            redencionesUsuario = null;
-            puntosHistoricosUsuario = null;
-            return;
-        }
-
-        // Calcular puntos disponibles y utilizados
-        redencionesUsuario = RedencionService.GetRedencionesPorDocumento(numeroDocumentoBuscar);
-        puntosUtilizados = redencionesUsuario.Sum(r => r.PuntosUtilizados);
-        puntosDisponibles = puntosUsuario.TotalPuntos - puntosUtilizados;
-
-        // Cargar puntos históricos
-        puntosHistoricosUsuario = PuntosHistoricosService.GetPuntosHistoricosPorDocumento(numeroDocumentoBuscar);
-
-        mensaje = string.Empty;
-    }
-
-    private void HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            BuscarUsuario();
-        }
-    }
-}
 

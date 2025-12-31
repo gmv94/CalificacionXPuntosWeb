@@ -1,14 +1,12 @@
-@page "/redencion-puntos"
-@inherits AuthComponentBase
-@using CalificacionXPuntosWeb.Models
 @using CalificacionXPuntosWeb.Services
-@inject IdeaService IdeaService
-@inject PremioService PremioService
-@inject RedencionService RedencionService
-@inject PuntosHistoricosService PuntosHistoricosService
-@inject LogService LogService
-
-<PageTitle>Redención de Puntos</PageTitle>
+@{
+    ViewData["Title"] = "Redención de Puntos";
+    var puntosUsuario = ViewBag.PuntosUsuario as CalificacionXPuntosWeb.Models.PuntosAcumulados;
+    var premiosDisponibles = ViewBag.PremiosDisponibles as List<CalificacionXPuntosWeb.Models.Premio>;
+    var redencionesUsuario = ViewBag.RedencionesUsuario as List<CalificacionXPuntosWeb.Models.Redencion>;
+    var puntosDisponibles = ViewBag.PuntosDisponibles as int? ?? 0;
+    var numeroDocumento = ViewBag.NumeroDocumento as string ?? "";
+}
 
 <h3>Redención de Puntos</h3>
 
@@ -19,11 +17,13 @@
                 <h5>Buscar Usuario</h5>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <label for="numeroDocumento" class="form-label">Número de Documento</label>
-                    <input type="text" class="form-control" id="numeroDocumento" @bind="numeroDocumentoBuscar" @onkeypress="HandleKeyPress" />
-                </div>
-                <button class="btn btn-primary" @onclick="BuscarUsuario">Buscar</button>
+                <form method="post" action="/Home/RedencionPuntos">
+                    <div class="mb-3">
+                        <label for="numeroDocumento" class="form-label">Número de Documento</label>
+                        <input type="text" class="form-control" id="numeroDocumento" name="numeroDocumento" value="@numeroDocumento" onkeypress="if(event.key === 'Enter') { this.form.submit(); }" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </form>
             </div>
         </div>
     </div>
@@ -96,9 +96,11 @@
                                             <td>
                                                 @if (puntosDisponibles >= premio.PuntosRequeridos)
                                                 {
-                                                    <button class="btn btn-sm btn-success" @onclick="() => RedimirPremio(premio.Id)">
-                                                        Redimir
-                                                    </button>
+                                                    <form method="post" action="/Home/RedimirPremio" style="display:inline;">
+                                                        <input type="hidden" name="numeroDocumento" value="@numeroDocumento" />
+                                                        <input type="hidden" name="premioId" value="@premio.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-success">Redimir</button>
+                                                    </form>
                                                 }
                                                 else
                                                 {
@@ -137,7 +139,10 @@
                                         <th>Puntos Utilizados</th>
                                         <th>Fecha Redención</th>
                                         <th>Estado</th>
-                                        <th>Acción</th>
+                                        @if (ViewBag.EsSuperAdmin == true)
+                                        {
+                                            <th>Acción</th>
+                                        }
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -148,14 +153,18 @@
                                             <td>@redencion.PuntosUtilizados</td>
                                             <td>@TimeHelper.ToColombiaTime(redencion.FechaRedencion).ToString("dd/MM/yyyy HH:mm")</td>
                                             <td>@redencion.Estado</td>
-                                            <td>
-                                                @if (esSuperAdmin)
-                                                {
-                                                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarRedencion(redencion.Id)">
-                                                        Eliminar
-                                                    </button>
-                                                }
-                                            </td>
+                                            @if (ViewBag.EsSuperAdmin == true)
+                                            {
+                                                <td>
+                                                    <form method="post" action="/Home/EliminarRedencion" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta redención?');">
+                                                        <input type="hidden" name="id" value="@redencion.Id" />
+                                                        <input type="hidden" name="numeroDocumento" value="@numeroDocumento" />
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            Eliminar
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            }
                                         </tr>
                                     }
                                 </tbody>
@@ -168,104 +177,10 @@
     </div>
 }
 
-@if (!string.IsNullOrEmpty(mensaje))
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje as string))
 {
-    <div class="alert alert-@(esExito ? "success" : "danger") alert-dismissible fade show" role="alert">
-        @mensaje
-        <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+    <div class="alert alert-@(ViewBag.EsExito == true ? "success" : "danger") alert-dismissible fade show" role="alert">
+        @ViewBag.Mensaje
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-
-
-@code {
-    private string numeroDocumentoBuscar = string.Empty;
-    private Models.PuntosAcumulados? puntosUsuario;
-    private List<Premio>? premiosDisponibles;
-    private List<Redencion>? redencionesUsuario;
-    private int puntosDisponibles = 0;
-    private string mensaje = string.Empty;
-    private bool esExito = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        await RequiereAutenticacion();
-        await VerificarAutenticacion(); // Asegurar que esSuperAdmin esté actualizado
-        CargarPremios();
-    }
-
-    private void CargarPremios()
-    {
-        premiosDisponibles = PremioService.GetPremiosDisponibles();
-    }
-
-    private void BuscarUsuario()
-    {
-        if (string.IsNullOrWhiteSpace(numeroDocumentoBuscar))
-        {
-            mensaje = "Por favor ingrese un número de documento.";
-            esExito = false;
-            return;
-        }
-
-        puntosUsuario = IdeaService.GetPuntosAcumuladosPorDocumento(numeroDocumentoBuscar);
-        
-        if (puntosUsuario == null)
-        {
-            mensaje = "No se encontraron puntos para este documento.";
-            esExito = false;
-            puntosUsuario = null;
-            redencionesUsuario = null;
-            return;
-        }
-
-        // Calcular puntos disponibles
-        redencionesUsuario = RedencionService.GetRedencionesPorDocumento(numeroDocumentoBuscar);
-        var puntosUtilizados = redencionesUsuario.Sum(r => r.PuntosUtilizados);
-        puntosDisponibles = puntosUsuario.TotalPuntos - puntosUtilizados;
-
-        mensaje = string.Empty;
-    }
-
-    private async Task RedimirPremio(int premioId)
-    {
-        var resultado = RedencionService.RedimirPremio(numeroDocumentoBuscar, premioId);
-        mensaje = resultado.Message;
-        esExito = resultado.Success;
-
-        if (resultado.Success)
-        {
-            // Recargar datos
-            BuscarUsuario();
-            CargarPremios();
-        }
-
-        await Task.CompletedTask;
-    }
-
-    private async Task EliminarRedencion(int id)
-    {
-        var redencion = RedencionService.GetRedencionById(id);
-        RedencionService.DeleteRedencion(id);
-        LogService.RegistrarLog("Delete", "Redencion", id, nombreUsuario ?? "Sistema", 
-            $"Redención eliminada - Premio: {redencion?.NombrePremio ?? "N/A"}, Documento: {redencion?.NumeroDocumento ?? "N/A"}");
-        mensaje = "Redención eliminada exitosamente.";
-        esExito = true;
-        
-        // Recargar datos
-        BuscarUsuario();
-        CargarPremios();
-        
-        await Task.CompletedTask;
-    }
-
-    private void HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            BuscarUsuario();
-        }
-    }
-
-}
-

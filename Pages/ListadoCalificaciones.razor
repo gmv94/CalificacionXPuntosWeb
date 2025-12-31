@@ -47,7 +47,13 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Proceso:</label>
-                <input type="text" class="form-control" value="@filtroProceso" @oninput="(e) => { filtroProceso = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }" />
+                <select class="form-select" value="@filtroProceso" @onchange="(e) => { filtroProceso = e.Value?.ToString() ?? string.Empty; paginaActual = 1; AplicarFiltros(); }">
+                    <option value="">Todos</option>
+                    @foreach (var proc in procesosDisponibles)
+                    {
+                        <option value="@proc">@proc</option>
+                    }
+                </select>
             </div>
         </div>
         <div class="row mt-2">
@@ -101,7 +107,7 @@
                 <th>Detalle</th>
                 @if (esSuperAdmin)
                 {
-                    <th>Acciones</th>
+                    <th><i class="bi bi-gear"></i></th>
                 }
             </tr>
         </thead>
@@ -119,9 +125,9 @@
                         <td>@idea.Proceso</td>
                         <td>@idea.Estado</td>
                         <td>@idea.Radicado</td>
-                        <td>@(idea.FechaRadicado?.ToString("dd/MM/yyyy") ?? "")</td>
+                        <td>@(idea.FechaRadicado != default(DateTime) ? idea.FechaRadicado.ToString("dd/MM/yyyy") : "")</td>
                         <td>@((int)Math.Round(idea.PuntosTotales))</td>
-                        <td>@idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@TimeHelper.ToColombiaTime(idea.FechaRegistro).ToString("dd/MM/yyyy HH:mm")</td>
                         <td>
                             <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(idea)">
                                 <i class="bi bi-eye"></i> Ver
@@ -133,7 +139,7 @@
                                 <button class="btn btn-sm btn-warning p-1" @onclick="() => EditarRegistro(idea)" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger p-1 ms-1" @onclick="() => EliminarRegistro(idea)" title="Eliminar">
+                                <button class="btn btn-sm btn-danger p-1" style="margin-left: 0.25rem;" @onclick="() => EliminarRegistro(idea)" title="Eliminar">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -209,13 +215,13 @@
         await RequiereAutenticacion();
         await VerificarAutenticacion();
         var rol = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "rol") ?? string.Empty;
-        if (!esSuperAdmin && rol != "Consulta")
+        if (!esSuperAdmin && rol != "Consulta" && rol != "Usuario")
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
                 title = "Acceso Denegado",
-                text = "Solo los SuperAdmin y usuarios con rol Consulta pueden acceder a esta sección.",
+                text = "Solo los SuperAdmin y usuarios con rol Consulta o Usuario pueden acceder a esta sección.",
                 confirmButtonText = "Aceptar"
             });
             NavigationManager.NavigateTo("/");
@@ -361,7 +367,7 @@
                     worksheet.Cell(row, col++).Value = idea.NombreUsuario;
                     worksheet.Cell(row, col++).Value = idea.Celular;
                     worksheet.Cell(row, col++).Value = idea.Radicado;
-                    worksheet.Cell(row, col++).Value = idea.FechaRadicado?.ToString("dd/MM/yyyy") ?? "";
+                    worksheet.Cell(row, col++).Value = idea.FechaRadicado != default(DateTime) ? idea.FechaRadicado.ToString("dd/MM/yyyy") : "";
                     worksheet.Cell(row, col++).Value = idea.Categoria;
                     worksheet.Cell(row, col++).Value = idea.Proceso;
                     worksheet.Cell(row, col++).Value = idea.Estado;
@@ -378,7 +384,7 @@
                     worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosFacilidadImplem);
                     worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosImpacto);
                     worksheet.Cell(row, col++).Value = (int)Math.Round(idea.PuntosTotales);
-                    worksheet.Cell(row, col++).Value = idea.FechaRegistro.ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cell(row, col++).Value = TimeHelper.ToColombiaTime(idea.FechaRegistro).ToString("dd/MM/yyyy HH:mm");
                     row++;
                 }
                 

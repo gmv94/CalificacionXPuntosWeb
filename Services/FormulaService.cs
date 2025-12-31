@@ -11,16 +11,17 @@ namespace CalificacionXPuntosWeb.Services
 
         public static void CalcularTodosLosPuntos(
             Idea idea,
-            List<ImpactoConfig>? configuracionImpactos = null)
+            List<ImpactoConfig>? configuracionImpactos = null,
+            ConfiguracionPuntosService? configuracionPuntosService = null)
         {
             // Calcular PUNTOS VALOR INVERSIÓN
-            idea.PuntosValorInversion = CalcularPuntosValorInversion(idea.ValorInversion ?? 0);
+            idea.PuntosValorInversion = CalcularPuntosValorInversion(idea.ValorInversion ?? 0, configuracionPuntosService);
 
             // Calcular PUNTOS ROI
-            idea.PuntosROI = CalcularPuntosROI(idea.RoiMeses);
+            idea.PuntosROI = CalcularPuntosROI(idea.RoiMeses, configuracionPuntosService);
 
             // Calcular PUNTOS FACILIDAD IMPLEM.
-            idea.PuntosFacilidadImplem = CalcularPuntosFacilidadImplem(idea.FacilidadImplem);
+            idea.PuntosFacilidadImplem = CalcularPuntosFacilidadImplem(idea.FacilidadImplem, configuracionPuntosService);
 
             // Obtener una copia actualizada del diccionario de impactos para el cálculo
             var impactosParaCalculo = new Dictionary<string, decimal>(idea.Impactos);
@@ -33,14 +34,24 @@ namespace CalificacionXPuntosWeb.Services
                                 idea.PuntosROI +
                                 idea.PuntosFacilidadImplem +
                                 idea.PuntosImpacto +
-                                idea.PuntosExtra;
+                                (idea.PuntosExtra ?? 0);
         }
 
-        private static decimal CalcularPuntosValorInversion(decimal valorInversion)
+        private static decimal CalcularPuntosValorInversion(decimal valorInversion, ConfiguracionPuntosService? configuracionPuntosService = null)
         {
-            // Fórmula: IF(VALOR <= 10M, 100%*10%*22000, IF(VALOR <= 20M, 60%*10%*22000, 20%*10%*22000))
             if (valorInversion == 0) return 0;
             
+            // Si hay servicio de configuración, usar valores de BD
+            if (configuracionPuntosService != null)
+            {
+                var config = configuracionPuntosService.GetConfiguracionValorInversion(valorInversion);
+                if (config != null)
+                {
+                    return (config.Porcentaje / 100m) * config.PorcentajeFijos * config.ValorBase;
+                }
+            }
+            
+            // Fallback a valores por defecto
             if (valorInversion <= 10000000)
             {
                 return 1.0m * PORCENTAJE_FIJOS * VALOR_BASE; // 100% * 10% * 22000 = 2200
@@ -55,13 +66,23 @@ namespace CalificacionXPuntosWeb.Services
             }
         }
 
-        private static decimal CalcularPuntosROI(string? roiMeses)
+        private static decimal CalcularPuntosROI(string? roiMeses, ConfiguracionPuntosService? configuracionPuntosService = null)
         {
-            // Fórmula: IF(ROI="<=3", 100%*10%*22000, IF(ROI=">3<=6", 75%*10%*22000, IF(ROI="N/A", 0, 25%*10%*22000)))
             if (string.IsNullOrEmpty(roiMeses)) return 0;
             
             roiMeses = roiMeses.Trim().ToUpper();
             
+            // Si hay servicio de configuración, usar valores de BD
+            if (configuracionPuntosService != null)
+            {
+                var config = configuracionPuntosService.GetConfiguracionROI(roiMeses);
+                if (config != null)
+                {
+                    return (config.Porcentaje / 100m) * config.PorcentajeFijos * config.ValorBase;
+                }
+            }
+            
+            // Fallback a valores por defecto
             if (roiMeses == "N/A" || roiMeses == "NA")
             {
                 return 0;
@@ -80,13 +101,23 @@ namespace CalificacionXPuntosWeb.Services
             }
         }
 
-        private static decimal CalcularPuntosFacilidadImplem(string? facilidad)
+        private static decimal CalcularPuntosFacilidadImplem(string? facilidad, ConfiguracionPuntosService? configuracionPuntosService = null)
         {
-            // Fórmula: IF(FACILIDAD="A", 100%*10%*22000, IF(FACILIDAD="B", 50%*10%*22000, 20%*10%*22000))
             if (string.IsNullOrEmpty(facilidad)) return 0;
             
             facilidad = facilidad.Trim().ToUpper();
             
+            // Si hay servicio de configuración, usar valores de BD
+            if (configuracionPuntosService != null)
+            {
+                var config = configuracionPuntosService.GetConfiguracionFacilidadImplem(facilidad);
+                if (config != null)
+                {
+                    return (config.Porcentaje / 100m) * config.PorcentajeFijos * config.ValorBase;
+                }
+            }
+            
+            // Fallback a valores por defecto
             if (facilidad == "A")
             {
                 return 1.0m * PORCENTAJE_FIJOS * VALOR_BASE; // 100% * 10% * 22000 = 2200

@@ -41,6 +41,11 @@
                         </NavLink>
                     </div>
                     <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="listado-redimidos">
+                            <span class="bi bi-list-check-nav-link" aria-hidden="true"></span> Listado Redimidos
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
                         <NavLink class="nav-link" href="puntos-acumulados">
                             <span class="bi bi-list-nested-nav-link" aria-hidden="true"></span> Puntos Acumulados
                         </NavLink>
@@ -94,7 +99,7 @@
         </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool collapseNavMenu = false; // Siempre activo en móvil
     private bool estaAutenticado = false;
     private bool esSuperAdmin = false;
     private string nombreUsuario = string.Empty;

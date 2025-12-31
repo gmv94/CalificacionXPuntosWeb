@@ -9,11 +9,12 @@
 @inject CategoriaBDService CategoriaBDService
 @inject EstadoBDService EstadoBDService
 @inject ProcesoBDService ProcesoBDService
+@inject ConfiguracionPuntosService ConfiguracionPuntosService
 @inject LogService LogService
 
-<PageTitle>Calificación Plan de Puntos</PageTitle>
+<PageTitle>Calificación de la Idea</PageTitle>
 
-<h3>Calificación Plan de Puntos</h3>
+<h3>Calificación de la Idea</h3>
 
 @if (modoVista == "ver")
 {
@@ -30,7 +31,7 @@ else if (modoVista == "editar")
 
 <div class="card">
     <div class="card-header">
-        <h4>@(modoVista == "ver" ? "Ver Registro de Calificación" : modoVista == "editar" ? "Editar Registro de Calificación" : "Nuevo Registro de Calificación")</h4>
+        <h4 style="font-size: calc(1.25rem);">@(modoVista == "ver" ? "Ver Registro" : modoVista == "editar" ? "Editar Registro" : "Nuevo Registro")</h4>
     </div>
     <div class="card-body">
         <EditForm Model="@nuevaIdea" OnValidSubmit="@GuardarIdea">
@@ -45,7 +46,7 @@ else if (modoVista == "editar")
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="documento" class="form-label">Documento:</label>
-                            <InputText id="documento" class="form-control" @bind-Value="nuevaIdea.NumeroDocumento" @onchange="RecalcularPuntos" maxlength="50" disabled="@esModoVer" />
+                            <InputText id="documento" class="form-control" @bind-Value="nuevaIdea.NumeroDocumento" @bind-Value:after="OnDocumentoChanged" maxlength="50" disabled="@esModoVer" />
                             <ValidationMessage For="@(() => nuevaIdea.NumeroDocumento)" />
                         </div>
                         <div class="col-md-6">
@@ -85,26 +86,28 @@ else if (modoVista == "editar")
                             </InputSelect>
                         </div>
                         <div class="col-md-6">
-                            <label for="estado" class="form-label">Estado:</label>
+                            <label for="estado" class="form-label">Estado: <span class="text-danger">*</span></label>
                             <InputSelect id="estado" class="form-select" @bind-Value="nuevaIdea.Estado" disabled="@esModoVer">
                                 <option value="">Seleccione...</option>
-                                <option value="N/A">N/A</option>
                                 @foreach (var est in estados)
                                 {
                                     <option value="@est">@est</option>
                                 }
                             </InputSelect>
+                            <ValidationMessage For="@(() => nuevaIdea.Estado)" />
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="radicado" class="form-label">Radicado:</label>
+                            <label for="radicado" class="form-label">Radicado: <span class="text-danger">*</span></label>
                             <InputText id="radicado" class="form-control" @bind-Value="nuevaIdea.Radicado" maxlength="50" disabled="@esModoVer" />
+                            <ValidationMessage For="@(() => nuevaIdea.Radicado)" />
                         </div>
                         <div class="col-md-6">
-                            <label for="fechaRadicado" class="form-label">Fecha Radicado:</label>
+                            <label for="fechaRadicado" class="form-label">Fecha Radicado: <span class="text-danger">*</span></label>
                             <InputDate id="fechaRadicado" class="form-control" @bind-Value="nuevaIdea.FechaRadicado" disabled="@esModoVer" />
+                            <ValidationMessage For="@(() => nuevaIdea.FechaRadicado)" />
                         </div>
                     </div>
 
@@ -271,7 +274,7 @@ else if (modoVista == "editar")
                     </div>
                     <div class="row mt-2">
                         <div class="col-md-3">
-                            <strong>Puntos Extra:</strong> @((int)Math.Round(nuevaIdea.PuntosExtra))
+                            <strong>Puntos Extra:</strong> @((int)Math.Round(nuevaIdea.PuntosExtra ?? 0))
                         </div>
                         <div class="col-md-9">
                             <h4><strong>Total: @((int)Math.Round(nuevaIdea.PuntosTotales)) puntos</strong></h4>
@@ -472,6 +475,37 @@ else if (modoVista == "editar")
 
     private bool _cargandoRegistroExistente = false;
     
+    private void OnDocumentoChanged()
+    {
+        if (esModoVer || _cargandoRegistroExistente) return;
+        
+        if (!string.IsNullOrWhiteSpace(nuevaIdea.NumeroDocumento))
+        {
+            // Buscar información del usuario por documento
+            var ideasUsuario = IdeaService.GetAllIdeas()
+                .Where(i => i.NumeroDocumento == nuevaIdea.NumeroDocumento)
+                .OrderByDescending(i => i.FechaRegistro)
+                .FirstOrDefault();
+            
+            if (ideasUsuario != null)
+            {
+                // Autollenar nombre si está vacío
+                if (string.IsNullOrWhiteSpace(nuevaIdea.NombreUsuario))
+                {
+                    nuevaIdea.NombreUsuario = ideasUsuario.NombreUsuario;
+                }
+                
+                // Autollenar celular si está vacío
+                if (string.IsNullOrWhiteSpace(nuevaIdea.Celular))
+                {
+                    nuevaIdea.Celular = ideasUsuario.Celular ?? string.Empty;
+                }
+            }
+        }
+        
+        RecalcularPuntos();
+    }
+    
     private void OnCategoriaChanged()
     {
         try
@@ -629,7 +663,7 @@ else if (modoVista == "editar")
             var impactosParaCalculo = new Dictionary<string, decimal>(nuevaIdea.Impactos);
             
             // Calcular puntos pasando el diccionario actualizado
-            FormulaService.CalcularTodosLosPuntos(nuevaIdea, impactosConfig);
+            FormulaService.CalcularTodosLosPuntos(nuevaIdea, impactosConfig, ConfiguracionPuntosService);
             StateHasChanged();
         }
         catch (Exception ex)

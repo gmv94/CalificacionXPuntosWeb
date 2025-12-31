@@ -5,6 +5,204 @@ html, body {
     min-height: 100vh;
 }
 
+/* Estilos para pestañas de navegación */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+.nav-tabs .nav-item {
+    margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: -2px;
+    margin-right: 0;
+    transition: all 0.3s ease;
+    display: block;
+    text-decoration: none;
+    background-color: transparent;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    background-color: #f8f9fa;
+    color: #007bff;
+    border-bottom-color: #dee2e6;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom-color: transparent;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link.active:hover {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom-color: transparent;
+}
+
+/* Layout principal con sidebar */
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.sidebar {
+    background: linear-gradient(180deg, #333333 0%, #000000 100%);
+}
+
+@media (min-width: 641px) {
+    .page {
+        flex-direction: row;
+    }
+
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+    }
+
+    .top-row {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .top-row, article {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+.top-row {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    justify-content: flex-end;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.titulo-principal {
+    font-size: calc(1.375rem);
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+/* Estilos del menú de navegación */
+.navbar-toggler {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-row.navbar {
+    height: 3.5rem;
+    background-color: #4a8205;
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+    color: #4a8205 !important;
+}
+
+.nav-item {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+}
+
+.nav-item:last-of-type {
+    padding-bottom: 1rem;
+}
+
+.nav-item a {
+    color: #d7d7d7;
+    border-radius: 4px;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    text-decoration: none;
+    padding: 0 1rem;
+}
+
+.nav-item a.active {
+    background-color: rgba(255,255,255,0.25);
+    color: white;
+}
+
+.nav-item a:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.nav-scrollable {
+    height: calc(100vh - 3.5rem);
+    overflow-y: auto;
+    background: linear-gradient(180deg, #333333 0%, #000000 100%);
+}
+
+@media (min-width: 641px) {
+    .navbar-toggler {
+        display: none;
+    }
+
+    .collapse {
+        display: block;
+    }
+}
+
+@media (max-width: 640.98px) {
+    .top-row:not(.auth) {
+        display: none;
+    }
+
+    .top-row.auth {
+        justify-content: space-between;
+    }
+
+    .top-row a, .top-row .btn-link {
+        margin-left: 0;
+    }
+    
+    /* Menú móvil siempre visible y comprimido */
+    .nav-scrollable {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .nav-item {
+        font-size: 0.85rem;
+        padding-bottom: 0.3rem;
+    }
+    
+    .nav-item a {
+        height: 2.5rem;
+        line-height: 2.5rem;
+        padding: 0 0.75rem;
+    }
+}
+
 #app {
     display: block !important;
     width: 100%;
@@ -85,5 +283,10 @@ a, .btn-link {
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+}
+
+.bg-light {
+    --bs-bg-opacity: 1;
+    background-color: rgb(222 222 222) !important;
 }
 

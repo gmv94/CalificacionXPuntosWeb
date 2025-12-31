@@ -86,7 +86,7 @@ else
                                             <tr>
                                                 <td>@historico.Puntos</td>
                                                 <td>@historico.Observaciones</td>
-                                                <td>@historico.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@TimeHelper.ToColombiaTime(historico.FechaRegistro).ToString("dd/MM/yyyy HH:mm")</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -112,7 +112,7 @@ else
                                         <td>@idea.DescripcionIdea</td>
                                         <td>@idea.Puntos</td>
                                         <td>@idea.Estado</td>
-                                        <td>@idea.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                        <td>@TimeHelper.ToColombiaTime(idea.FechaRegistro).ToString("dd/MM/yyyy")</td>
                                     </tr>
                                 }
                             </tbody>
