@@ -54,7 +54,7 @@
                         @if (ViewBag.EsSuperAdmin == true)
                         {
                             <a href="/Home/TablaPremios?id=@premio.Id" class="btn btn-sm btn-warning">Editar</a>
-                            <form method="post" action="/Home/EliminarPremio" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este premio?');">
+                            <form method="post" action="/Home/EliminarPremio" style="display:inline;" class="form-eliminar-premio" data-id="@premio.Id" data-nombre="@premio.Nombre">
                                 <input type="hidden" name="id" value="@premio.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                             </form>
@@ -158,4 +158,25 @@
             puntosInput.value = 0;
         }
     }
+
+    // Manejar eliminación de premios con SweetAlert2
+    document.querySelectorAll('.form-eliminar-premio').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = this.dataset.nombre || 'este premio';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea eliminar el premio "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
 </script>

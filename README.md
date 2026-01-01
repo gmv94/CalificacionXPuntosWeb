@@ -1,6 +1,6 @@
 # Sistema de Calificación por Puntos
 
-Sistema web desarrollado en Blazor Server para la gestión de puntos acumulados, redención de premios y administración de premios.
+Sistema web desarrollado en ASP.NET Core MVC con Razor Pages para la gestión de puntos acumulados, redención de premios y administración de premios.
 
 ## Características
 
@@ -38,13 +38,15 @@ CalificacionXPuntosWeb/
 │   ├── Premio.cs
 │   ├── Redencion.cs
 │   └── PuntosAcumulados.cs
-├── Pages/             # Páginas Blazor
-│   ├── Index.razor
-│   ├── PuntosAcumulados.razor
-│   ├── RedencionPuntos.razor
-│   ├── TablaPremios.razor
-│   ├── TestData.razor
-│   └── _Host.cshtml
+├── Views/             # Vistas MVC Razor
+│   ├── Home/
+│   │   ├── Index.cshtml
+│   │   ├── PuntosAcumulados.cshtml
+│   │   ├── RedencionPuntos.cshtml
+│   │   ├── TablaPremios.cshtml
+│   │   └── ...
+│   └── Shared/
+│       └── _Layout.cshtml
 ├── Services/          # Servicios de negocio
 │   ├── IdeaService.cs
 │   ├── PremioService.cs
@@ -105,10 +107,12 @@ CalificacionXPuntosWeb/
 
 ## Tecnologías Utilizadas
 
-- Blazor Server
+- ASP.NET Core MVC
+- Razor Pages
 - .NET 8.0
 - Bootstrap (para estilos)
 - C# 12
+- Entity Framework Core
 
 ## Notas
 

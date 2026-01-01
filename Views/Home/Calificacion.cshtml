@@ -5,6 +5,8 @@
     var categorias = ViewBag.Categorias as List<string> ?? new List<string>();
     var estados = ViewBag.Estados as List<string> ?? new List<string>();
     var procesos = ViewBag.Procesos as List<string> ?? new List<string>();
+    var configuracionesROI = ViewBag.ConfiguracionesROI as List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos> ?? new List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos>();
+    var configuracionesFacilidadImplem = ViewBag.ConfiguracionesFacilidadImplem as List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos> ?? new List<CalificacionXPuntosWeb.Models.ConfiguracionPuntos>();
     var esModoVer = modo == "ver";
     var esModoEditar = modo == "editar";
 }
@@ -162,29 +164,16 @@ else if (modo == "editar")
                             <label for="facilidadImplem" class="form-label">Facilidad Implem.:</label>
                             <select class="form-select" id="facilidadImplem" name="FacilidadImplem" @(esModoVer ? "disabled" : "") onchange="recalcularPuntos()">
                                 <option value="">Seleccione...</option>
-                                @if (idea?.FacilidadImplem == "A")
+                                @foreach (var config in configuracionesFacilidadImplem)
                                 {
-                                    <option value="A" selected>A</option>
-                                }
-                                else
-                                {
-                                    <option value="A">A</option>
-                                }
-                                @if (idea?.FacilidadImplem == "B")
-                                {
-                                    <option value="B" selected>B</option>
-                                }
-                                else
-                                {
-                                    <option value="B">B</option>
-                                }
-                                @if (idea?.FacilidadImplem == "C")
-                                {
-                                    <option value="C" selected>C</option>
-                                }
-                                else
-                                {
-                                    <option value="C">C</option>
+                                    @if (idea?.FacilidadImplem == config.Valor)
+                                    {
+                                        <option value="@config.Valor" selected>@config.Valor</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@config.Valor">@config.Valor</option>
+                                    }
                                 }
                             </select>
                         </div>
@@ -195,37 +184,17 @@ else if (modo == "editar")
                             <label for="roiMeses" class="form-label">ROI (MESES):</label>
                             <select class="form-select" id="roiMeses" name="RoiMeses" @(esModoVer ? "disabled" : "") onchange="recalcularPuntos()">
                                 <option value="">Seleccione...</option>
-                                @if (idea?.RoiMeses == "<=3")
+                                @foreach (var config in configuracionesROI)
                                 {
-                                    <option value="<=3" selected>&lt;=3</option>
-                                }
-                                else
-                                {
-                                    <option value="<=3">&lt;=3</option>
-                                }
-                                @if (idea?.RoiMeses == ">3<=6")
-                                {
-                                    <option value=">3<=6" selected>&gt;3&lt;=6</option>
-                                }
-                                else
-                                {
-                                    <option value=">3<=6">&gt;3&lt;=6</option>
-                                }
-                                @if (idea?.RoiMeses == ">6")
-                                {
-                                    <option value=">6" selected>&gt;6</option>
-                                }
-                                else
-                                {
-                                    <option value=">6">&gt;6</option>
-                                }
-                                @if (idea?.RoiMeses == "N/A")
-                                {
-                                    <option value="N/A" selected>N/A</option>
-                                }
-                                else
-                                {
-                                    <option value="N/A">N/A</option>
+                                    var displayValue = config.Valor.Replace("<", "&lt;").Replace(">", "&gt;");
+                                    @if (idea?.RoiMeses == config.Valor)
+                                    {
+                                        <option value="@config.Valor" selected>@Html.Raw(displayValue)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@config.Valor">@Html.Raw(displayValue)</option>
+                                    }
                                 }
                             </select>
                         </div>
@@ -500,6 +469,125 @@ else if (modo == "editar")
         // Calcular puntos iniciales
         window.addEventListener('DOMContentLoaded', function() {
             recalcularPuntos();
+        });
+
+        // Interceptar el submit del formulario para usar fetch y SweetAlert2
+        document.getElementById('formCalificacion')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validar campos obligatorios antes de enviar
+            const numeroDocumento = document.getElementById('numeroDocumento')?.value?.trim();
+            const nombreUsuario = document.getElementById('nombreUsuario')?.value?.trim();
+            const descripcionIdea = document.getElementById('descripcionIdea')?.value?.trim();
+            const estado = document.getElementById('estado')?.value?.trim();
+            const radicado = document.getElementById('radicado')?.value?.trim();
+            const fechaRadicado = document.getElementById('fechaRadicado')?.value;
+
+            if (!numeroDocumento) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Documento es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!nombreUsuario) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Nombre es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!descripcionIdea) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Resumen de la idea es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!estado) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Estado es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!radicado) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Radicado es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!fechaRadicado) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Fecha Radicado es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            // Crear FormData del formulario
+            const formData = new FormData(this);
+            const modo = '@modo';
+            if (modo) {
+                formData.append('modo', modo);
+            }
+
+            try {
+                const response = await fetch('/Home/GuardarCalificacion?modo=' + modo, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: data.message || 'Registro guardado exitosamente.',
+                        confirmButtonText: 'Aceptar'
+                    });
+
+                    // Si es modo crear, limpiar formulario; si es editar, redirigir al listado
+                    if (modo === 'crear' || !modo) {
+                        limpiarFormulario();
+                    } else {
+                        window.location.href = '/Home/ListadoCalificaciones';
+                    }
+                } else {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Error al guardar el registro.',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            } catch (error) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al procesar la solicitud: ' + error.message,
+                    confirmButtonText: 'Aceptar'
+                });
+            }
         });
     </script>
 }

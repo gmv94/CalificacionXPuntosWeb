@@ -244,46 +244,6 @@ a, .btn-link {
     color: red;
 }
 
-#blazor-error-ui {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
-
-.blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHZpZXdCb3g9IjAgMCA1NiA0OSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwLjQxMzUgNDQuNDYwNEMxNS4xOTUzIDQ0LjQ2MDQgMTAuOTc4NCA0MC4yNDM1IDEwLjk3ODQgMzUuMDI1M0MxMC45Nzg0IDI5LjgwNzIgMTUuMTk1MyAyNS41OTAzIDIwLjQxMzUgMjUuNTkwM0MyNS42MzE2IDI1LjU5MDMgMjkuODQ4NSAyOS44MDcyIDI5Ljg0ODUgMzUuMDI1M0MyOS44NDg1IDQwLjI0MzUgMjUuNjMxNiA0NC40NjA0IDIwLjQxMzUgNDQuNDYwNFoiIGZpbGw9IiNGRjU1NTUiLz4KPHBhdGggZD0iTTM1LjU4NjUgNDQuNDYwNEMzMC4zNjgzIDQ0LjQ2MDQgMjYuMTUxNCA0MC4yNDM1IDI2LjE1MTQgMzUuMDI1M0MyNi4xNTE0IDI5LjgwNzIgMzAuMzY4MyAyNS41OTAzIDM1LjU4NjUgMjUuNTkwM0M0MC44MDQ2IDI1LjU5MDMgNDUuMDIxNSAyOS44MDcyIDQ1LjAyMTUgMzUuMDI1M0M0NS4wMjE1IDQwLjI0MzUgNDAuODA0NiA0NC40NjA0IDM1LjU4NjUgNDQuNDYwNFoiIGZpbGw9IiNGRjU1NTUiLz4KPHBhdGggZD0iTTIwLjQxMzUgMTkuNDYwNEMxNS4xOTUzIDE5LjQ2MDQgMTAuOTc4NCAxNS4yNDM1IDEwLjk3ODQgMTAuMDI1M0MxMC45Nzg0IDQuODA3MTYgMTUuMTk1MyAwLjU5MDI3MyAyMC40MTM1IDAuNTkwMjczQzI1LjYzMTYgMC41OTAyNzMgMjkuODQ4NSA0LjgwNzE2IDI5Ljg0ODUgMTAuMDI1M0MyOS44NDg1IDE1LjI0MzUgMjUuNjMxNiAxOS40NjA0IDIwLjQxMzUgMTkuNDYwNFoiIGZpbGw9IiNGRjU1NTUiLz4KPHBhdGggZD0iTTM1LjU4NjUgMTkuNDYwNEMzMC4zNjgzIDE5LjQ2MDQgMjYuMTUxNCAxNS4yNDM1IDI2LjE1MTQgMTAuMDI1M0MyNi4xNTE0IDQuODA3MTYgMzAuMzY4MyAwLjU5MDI3MyAzNS41ODY1IDAuNTkwMjczQzQwLjgwNDYgMC41OTAyNzMgNDUuMDIxNSA0LjgwNzE2IDQ1LjAyMTUgMTAuMDI1M0M0NS4wMjE1IDE1LjI0MzUgNDAuODA0NiAxOS40NjA0IDM1LjU4NjUgMTkuNDYwNFoiIGZpbGw9IiNGRjU1NTUiLz4KPC9zdmc+) no-repeat 1rem/1.8rem, #b32121;
-    padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
-}
-
-    .blazor-error-boundary::after {
-        content: "Ha ocurrido un error";
-    }
-
-/* Ocultar completamente el modal de reconexión de Blazor Server */
-.components-reconnect-modal,
-.components-reconnect-show,
-.components-reconnect-hide,
-.components-reconnect-failed,
-.components-reconnect-rejected {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
 
 .bg-light {
     --bs-bg-opacity: 1;

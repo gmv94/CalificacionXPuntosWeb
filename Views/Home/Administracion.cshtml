@@ -73,7 +73,7 @@
                                         <a href="/Home/Administracion?tab=categorias&accion=editar&id=@cat.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/Home/EliminarCategoria" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta categoría?');">
+                                        <form method="post" action="/Home/EliminarCategoria" style="display:inline;" class="form-eliminar-categoria" data-id="@cat.Id" data-nombre="@cat.Nombre">
                                             <input type="hidden" name="id" value="@cat.Id" />
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i> Eliminar
@@ -124,7 +124,7 @@ else if (tabActivo == "estados")
                                         <a href="/Home/Administracion?tab=estados&accion=editar&id=@est.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/Home/EliminarEstado" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este estado?');">
+                                        <form method="post" action="/Home/EliminarEstado" style="display:inline;" class="form-eliminar-estado" data-id="@est.Id" data-nombre="@est.Nombre">
                                             <input type="hidden" name="id" value="@est.Id" />
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i> Eliminar
@@ -175,7 +175,7 @@ else if (tabActivo == "procesos")
                                         <a href="/Home/Administracion?tab=procesos&accion=editar&id=@proc.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/Home/EliminarProceso" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este proceso?');">
+                                        <form method="post" action="/Home/EliminarProceso" style="display:inline;" class="form-eliminar-proceso" data-id="@proc.Id" data-nombre="@proc.Nombre">
                                             <input type="hidden" name="id" value="@proc.Id" />
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i> Eliminar
@@ -268,7 +268,7 @@ else if (tabActivo == "valor-puntos")
                                         <a href="/Home/Administracion?tab=valor-puntos&accion=editar&id=@vp.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/Home/EliminarValorPuntos" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar este valor de puntos?');">
+                                        <form method="post" action="/Home/EliminarValorPuntos" style="display:inline;" class="form-eliminar-valor-puntos" data-id="@vp.Id">
                                             <input type="hidden" name="id" value="@vp.Id" />
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i> Eliminar
@@ -363,7 +363,7 @@ else if (tabActivo == "configuracion-puntos")
                                         <a href="/Home/Administracion?tab=configuracion-puntos&accion=editar&id=@config.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/Home/EliminarConfiguracionPuntos" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta configuración?');">
+                                        <form method="post" action="/Home/EliminarConfiguracionPuntos" style="display:inline;" class="form-eliminar-configuracion-puntos" data-id="@config.Id" data-tipo="@config.Tipo" data-valor="@config.Valor">
                                             <input type="hidden" name="id" value="@config.Id" />
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i> Eliminar
@@ -422,7 +422,7 @@ else if (tabActivo == "usuarios")
                                         <a href="/Home/Administracion?tab=usuarios&accion=cambiar-contrasena&id=@usuario.Id" class="btn btn-sm btn-warning">
                                             <i class="bi bi-key"></i> Cambiar Contraseña
                                         </a>
-                                        <form method="post" action="/Home/BloquearDesbloquearUsuario" style="display:inline;" onsubmit="return confirm('¿Está seguro de @(usuario.Activo ? "bloquear" : "desbloquear") este usuario?');">
+                                        <form method="post" action="/Home/BloquearDesbloquearUsuario" style="display:inline;" class="form-bloquear-usuario" data-id="@usuario.Id" data-activo="@usuario.Activo" data-nombre="@usuario.NombreUsuario">
                                             <input type="hidden" name="id" value="@usuario.Id" />
                                             <input type="hidden" name="activo" value="@(!usuario.Activo)" />
                                             <button type="submit" class="btn btn-sm @(usuario.Activo ? "btn-secondary" : "btn-success")">
@@ -945,4 +945,127 @@ else if (tabActivo == "logs")
             row.remove();
         }
     }
+
+    // Manejar eliminaciones con SweetAlert2
+    document.querySelectorAll('.form-eliminar-categoria').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = this.dataset.nombre || 'esta categoría';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea eliminar la categoría "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-eliminar-estado').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = this.dataset.nombre || 'este estado';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea eliminar el estado "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-eliminar-proceso').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = this.dataset.nombre || 'este proceso';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea eliminar el proceso "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-eliminar-valor-puntos').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: '¿Desea eliminar este valor de puntos?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-eliminar-configuracion-puntos').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const tipo = this.dataset.tipo || '';
+            const valor = this.dataset.valor || '';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea eliminar la configuración "${tipo} - ${valor}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-bloquear-usuario').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const activo = this.dataset.activo === 'True';
+            const nombre = this.dataset.nombre || 'este usuario';
+            const accion = activo ? 'bloquear' : 'desbloquear';
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: `¿Desea ${accion} al usuario "${nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: activo ? '#ffc107' : '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: `Sí, ${accion}`,
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
 </script>

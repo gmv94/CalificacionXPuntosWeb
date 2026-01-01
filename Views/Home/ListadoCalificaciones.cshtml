@@ -125,7 +125,7 @@
                                 <a href="/Home/Calificacion?id=@idea.Id&modo=editar" class="btn btn-sm btn-warning p-1" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form method="post" action="/Home/EliminarCalificacion" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar el registro ID @idea.Id - @idea.NombreUsuario?');">
+                                <form method="post" action="/Home/EliminarCalificacion" style="display:inline;" class="form-eliminar-calificacion" data-id="@idea.Id" data-nombre="@idea.NombreUsuario">
                                     <input type="hidden" name="id" value="@idea.Id" />
                                     <button type="submit" class="btn btn-sm btn-danger p-1 ms-1" title="Eliminar">
                                         <i class="bi bi-trash"></i>
@@ -176,3 +176,28 @@
         <i class="bi bi-download"></i> Exportar Excel
     </a>
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.form-eliminar-calificacion').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const nombre = this.dataset.nombre || '';
+                const result = await Swal.fire({
+                    title: '¿Está seguro?',
+                    text: `¿Desea eliminar el registro ID ${id} - ${nombre}?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            });
+        });
+    </script>
+}

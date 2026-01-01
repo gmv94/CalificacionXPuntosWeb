@@ -221,7 +221,7 @@ namespace CalificacionXPuntosWeb.Controllers
         }
 
         [HttpPost]
-        public IActionResult EliminarRedencion(int id, string numeroDocumento)
+        public IActionResult EliminarRedencion(int id, string numeroDocumento, string? returnUrl = null)
         {
             var authResult = RequiereSuperAdmin();
             if (authResult != null) return authResult;
@@ -249,7 +249,92 @@ namespace CalificacionXPuntosWeb.Controllers
                 TempData["TipoMensaje"] = "error";
             }
 
+            // Si viene de ListadoRedimidos, redirigir allí; si no, a RedencionPuntos
+            if (!string.IsNullOrEmpty(returnUrl) && returnUrl.Contains("ListadoRedimidos"))
+            {
+                return RedirectToAction("ListadoRedimidos");
+            }
             return RedirectToAction("RedencionPuntos", new { numeroDocumento });
+        }
+
+        [HttpGet]
+        public IActionResult ListadoRedimidos(string filtroDocumento = "", string filtroNombre = "", string filtroPremio = "", 
+            string filtroEstado = "", string filtroFechaDesde = "", string filtroFechaHasta = "", int pagina = 1)
+        {
+            var authResult = RequiereAutenticacion();
+            if (authResult != null) return authResult;
+
+            var rol = HttpContext.Session.GetString("Rol") ?? "";
+            var esSuperAdmin = rol == "SuperAdmin";
+            
+            if (!esSuperAdmin && rol != "Consulta" && rol != "Usuario")
+            {
+                TempData["Mensaje"] = "No tiene permisos para acceder a esta sección.";
+                TempData["TipoMensaje"] = "error";
+                return RedirectToAction("Index");
+            }
+
+            var todasLasRedenciones = _redencionService.GetAllRedenciones() ?? new List<Redencion>();
+            var query = todasLasRedenciones.AsQueryable();
+
+            // Aplicar filtros
+            if (!string.IsNullOrWhiteSpace(filtroDocumento))
+            {
+                query = query.Where(r => r.NumeroDocumento.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroNombre))
+            {
+                query = query.Where(r => r.NombreUsuario.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroPremio))
+            {
+                query = query.Where(r => r.NombrePremio.Contains(filtroPremio, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroEstado))
+            {
+                query = query.Where(r => r.Estado == filtroEstado);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroFechaDesde) && DateTime.TryParse(filtroFechaDesde, out var fechaDesde))
+            {
+                query = query.Where(r => r.FechaRedencion.Date >= fechaDesde.Date);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroFechaHasta) && DateTime.TryParse(filtroFechaHasta, out var fechaHasta))
+            {
+                query = query.Where(r => r.FechaRedencion.Date <= fechaHasta.Date);
+            }
+
+            // Ordenar por fecha más reciente primero
+            var redencionesFiltradas = query.OrderByDescending(r => r.FechaRedencion).ToList();
+
+            // Paginación
+            var registrosPorPagina = 20;
+            var totalPaginas = (int)Math.Ceiling((double)redencionesFiltradas.Count / registrosPorPagina);
+            if (totalPaginas < 1) totalPaginas = 1;
+            if (pagina > totalPaginas) pagina = totalPaginas;
+
+            var inicio = (pagina - 1) * registrosPorPagina;
+            var redencionesPaginadas = redencionesFiltradas.Skip(inicio).Take(registrosPorPagina).ToList();
+
+            ViewBag.Redenciones = redencionesPaginadas;
+            ViewBag.TotalRegistros = redencionesFiltradas.Count;
+            ViewBag.PaginaActual = pagina;
+            ViewBag.TotalPaginas = totalPaginas;
+            ViewBag.EsSuperAdmin = esSuperAdmin;
+            
+            // Mantener filtros en ViewBag para el formulario
+            ViewBag.FiltroDocumento = filtroDocumento;
+            ViewBag.FiltroNombre = filtroNombre;
+            ViewBag.FiltroPremio = filtroPremio;
+            ViewBag.FiltroEstado = filtroEstado;
+            ViewBag.FiltroFechaDesde = filtroFechaDesde;
+            ViewBag.FiltroFechaHasta = filtroFechaHasta;
+
+            return View();
         }
 
         [HttpGet]
@@ -767,6 +852,18 @@ namespace CalificacionXPuntosWeb.Controllers
                     ViewBag.Procesos = new List<string>();
                 }
 
+                // Cargar configuraciones de puntos
+                try
+                {
+                    ViewBag.ConfiguracionesROI = _configuracionPuntosService.GetConfiguracionesPorTipo("ROI");
+                    ViewBag.ConfiguracionesFacilidadImplem = _configuracionPuntosService.GetConfiguracionesPorTipo("FacilidadImplem");
+                }
+                catch
+                {
+                    ViewBag.ConfiguracionesROI = new List<ConfiguracionPuntos>();
+                    ViewBag.ConfiguracionesFacilidadImplem = new List<ConfiguracionPuntos>();
+                }
+
                 if (id.HasValue)
                 {
                     var idea = _ideaService.GetIdeaById(id.Value);
@@ -892,14 +989,13 @@ namespace CalificacionXPuntosWeb.Controllers
 
             try
             {
-                // Asegurar valores por defecto INMEDIATAMENTE para campos numéricos
+                // INICIALIZAR campos calculados a 0 ANTES de cualquier operación
                 // Esto previene problemas de model binding cuando los campos no se envían
-                // PuntosExtra ahora permite NULL, así que no se valida
-                if (idea.PuntosValorInversion < 0) idea.PuntosValorInversion = 0;
-                if (idea.PuntosROI < 0) idea.PuntosROI = 0;
-                if (idea.PuntosFacilidadImplem < 0) idea.PuntosFacilidadImplem = 0;
-                if (idea.PuntosImpacto < 0) idea.PuntosImpacto = 0;
-                if (idea.PuntosTotales < 0) idea.PuntosTotales = 0;
+                idea.PuntosValorInversion = 0;
+                idea.PuntosROI = 0;
+                idea.PuntosFacilidadImplem = 0;
+                idea.PuntosImpacto = 0;
+                idea.PuntosTotales = 0;
 
                 // Validar campos obligatorios
                 if (string.IsNullOrWhiteSpace(idea.NumeroDocumento))
@@ -971,17 +1067,24 @@ namespace CalificacionXPuntosWeb.Controllers
                     }
                 }
 
-                // Calcular puntos
-                FormulaService.CalcularTodosLosPuntos(idea, categoria?.Impactos, _configuracionPuntosService);
+                // Calcular puntos (con manejo de errores)
+                try
+                {
+                    FormulaService.CalcularTodosLosPuntos(idea, categoria?.Impactos, _configuracionPuntosService);
+                }
+                catch (Exception calcEx)
+                {
+                    // Si el cálculo falla, usar valores por defecto (0)
+                    // Los valores ya están inicializados a 0 arriba
+                }
 
                 // Asegurar valores por defecto DESPUÉS de calcular puntos
-                // Esto garantiza que los campos numéricos siempre tengan un valor válido
-                // PuntosExtra ahora permite NULL, así que no se valida
-                if (idea.PuntosValorInversion < 0) idea.PuntosValorInversion = 0;
-                if (idea.PuntosROI < 0) idea.PuntosROI = 0;
-                if (idea.PuntosFacilidadImplem < 0) idea.PuntosFacilidadImplem = 0;
-                if (idea.PuntosImpacto < 0) idea.PuntosImpacto = 0;
-                if (idea.PuntosTotales < 0) idea.PuntosTotales = 0;
+                // Esto garantiza que los campos numéricos siempre tengan un valor válido (no null, no negativos)
+                idea.PuntosValorInversion = Math.Max(0, idea.PuntosValorInversion);
+                idea.PuntosROI = Math.Max(0, idea.PuntosROI);
+                idea.PuntosFacilidadImplem = Math.Max(0, idea.PuntosFacilidadImplem);
+                idea.PuntosImpacto = Math.Max(0, idea.PuntosImpacto);
+                idea.PuntosTotales = Math.Max(0, idea.PuntosTotales);
 
                 if (idea.Id > 0)
                 {

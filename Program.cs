@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
 
 // Configurar Entity Framework
@@ -578,12 +577,6 @@ app.MapControllerRoute(
 
 // Mapear Razor Pages
 app.MapRazorPages();
-
-// Mapear Blazor Hub
-app.MapBlazorHub();
-
-// Fallback solo para rutas de Blazor (solo si no es una ruta de MVC o archivo estático)
-app.MapFallbackToPage("/_Host");
 
 app.Run();
 
