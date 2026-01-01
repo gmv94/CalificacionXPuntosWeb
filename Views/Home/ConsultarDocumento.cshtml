@@ -110,11 +110,10 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Radicado</th>
-                                        <th>Categoría</th>
-                                        <th>Proceso</th>
+                                        <th>Fecha Radicado</th>
+                                        <th>Título de la Idea</th>
                                         <th>Estado</th>
                                         <th>Puntos</th>
-                                        <th>Fecha Radicado</th>
                                         <th>Observaciones</th>
                                     </tr>
                                 </thead>
@@ -124,11 +123,10 @@
                                         var observacionesId = $"obs_{idea.Id}";
                                         <tr>
                                             <td>@idea.Radicado</td>
-                                            <td>@idea.Categoria</td>
-                                            <td>@idea.Proceso</td>
+                                            <td>@(idea.FechaRadicado != default(DateTime) ? idea.FechaRadicado.ToString("dd/MM/yyyy") : "-")</td>
+                                            <td>@(idea.TituloIdea ?? "-")</td>
                                             <td>@idea.Estado</td>
                                             <td>@idea.Puntos</td>
-                                            <td>@(idea.FechaRadicado != default(DateTime) ? idea.FechaRadicado.ToString("dd/MM/yyyy") : TimeHelper.ToColombiaTime(idea.FechaRegistro).ToString("dd/MM/yyyy"))</td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(idea.Observaciones))
                                                 {
@@ -172,7 +170,7 @@
                                     <tr>
                                         <th>Puntos</th>
                                         <th>Observaciones</th>
-                                        <th>Fecha Creación</th>
+                                        <th>Fecha Asignación</th>
                                     </tr>
                                 </thead>
                                 <tbody>

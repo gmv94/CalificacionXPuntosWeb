@@ -147,7 +147,21 @@ namespace CalificacionXPuntosWeb.Services
 
                 // Obtener todas las ideas y filtrar en memoria para manejar espacios
                 // Esto es necesario porque EF Core no puede traducir Trim() a SQL en todas las versiones
-                var todasLasIdeas = _context.Ideas.ToList();
+                // Si la columna TituloIdea no existe, usar consulta SQL directa que la excluye
+                List<Idea> todasLasIdeas;
+                try
+                {
+                    todasLasIdeas = _context.Ideas.ToList();
+                }
+                catch (Exception ex) when (ex.Message.Contains("TituloIdea") || ex.Message.Contains("Invalid column name") || ex.Message.Contains("Invalid object name"))
+                {
+                    // Si falla porque la columna TituloIdea no existe, usar consulta SQL directa sin esa columna
+                    // Usar NULL para TituloIdea en el SELECT
+                    todasLasIdeas = _context.Ideas
+                        .FromSqlRaw("SELECT Id, NumeroDocumento, NombreUsuario, Celular, Radicado, FechaRadicado, Categoria, Proceso, Estado, NULL AS TituloIdea, DescripcionIdea, ValorInversion, RoiMeses, FacilidadImplem, ImpactosJson, PuntosExtra, ComentariosPuntosExtra, Observaciones, PuntosValorInversion, PuntosROI, PuntosFacilidadImplem, PuntosImpacto, PuntosTotales, FechaCreacion FROM RegistrosCalificacion")
+                        .ToList();
+                }
+
                 var ideasUsuario = todasLasIdeas
                     .Where(i => i.NumeroDocumento != null && i.NumeroDocumento.Trim().Equals(numeroDocumentoNormalizado, StringComparison.OrdinalIgnoreCase))
                     .ToList();
@@ -193,8 +207,10 @@ namespace CalificacionXPuntosWeb.Services
 
                 return puntosAcumulados;
             }
-            catch
+            catch (Exception ex)
             {
+                // Log del error para debugging (en producción se puede quitar)
+                System.Diagnostics.Debug.WriteLine($"Error en GetPuntosAcumuladosPorDocumento: {ex.Message}");
                 return null;
             }
         }

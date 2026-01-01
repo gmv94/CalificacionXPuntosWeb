@@ -14,6 +14,7 @@ namespace CalificacionXPuntosWeb.Models
         public string? Categoria { get; set; }
         public string? Proceso { get; set; }
         public string Estado { get; set; } = string.Empty;
+        public string? TituloIdea { get; set; }
         public string DescripcionIdea { get; set; } = string.Empty;
         
         // Campos para cálculo de puntos

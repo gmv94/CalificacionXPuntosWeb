@@ -139,6 +139,13 @@ else if (modo == "editar")
 
                     <div class="row g-3 mb-3">
                         <div class="col-12">
+                            <label for="tituloIdea" class="form-label">Título de la Idea: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="tituloIdea" name="TituloIdea" value="@idea?.TituloIdea" maxlength="500" @(esModoVer ? "readonly" : "required") />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
                             <label for="descripcionIdea" class="form-label">Resumen de la idea: <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="descripcionIdea" name="DescripcionIdea" rows="4" maxlength="4000" @(esModoVer ? "readonly" : "required")>@idea?.DescripcionIdea</textarea>
                             <small class="text-muted"><span id="contadorDescripcion">@(idea?.DescripcionIdea?.Length ?? 0)</span> / 4000 caracteres</small>
@@ -510,6 +517,7 @@ else if (modo == "editar")
             // Validar campos obligatorios antes de enviar
             const numeroDocumento = document.getElementById('numeroDocumento')?.value?.trim();
             const nombreUsuario = document.getElementById('nombreUsuario')?.value?.trim();
+            const tituloIdea = document.getElementById('tituloIdea')?.value?.trim();
             const descripcionIdea = document.getElementById('descripcionIdea')?.value?.trim();
             const estado = document.getElementById('estado')?.value?.trim();
             const radicado = document.getElementById('radicado')?.value?.trim();
@@ -530,6 +538,16 @@ else if (modo == "editar")
                     icon: 'error',
                     title: 'Error de validación',
                     text: 'El campo Nombre es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            if (!tituloIdea) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Título de la Idea es obligatorio.',
                     confirmButtonText: 'Aceptar'
                 });
                 return;

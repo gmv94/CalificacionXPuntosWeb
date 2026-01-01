@@ -57,6 +57,7 @@ namespace CalificacionXPuntosWeb.Data
                 
                 // Mapear campos adicionales
                 entity.Property(e => e.Celular).HasMaxLength(20).IsRequired(false);
+                entity.Property(e => e.TituloIdea).HasColumnName("TituloIdea").HasMaxLength(500).IsRequired(false);
                 entity.Property(e => e.DescripcionIdea).HasColumnName("DescripcionIdea").HasMaxLength(4000).IsRequired();
                 entity.Property(e => e.FechaRadicado).HasColumnName("FechaRadicado").HasColumnType("datetime2").IsRequired();
                 entity.Property(e => e.ImpactosJson).HasColumnName("ImpactosJson").HasMaxLength(4000).IsRequired(false);

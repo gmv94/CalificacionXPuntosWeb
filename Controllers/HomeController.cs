@@ -715,6 +715,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 worksheet.Cell(1, col++).Value = "Categoría";
                 worksheet.Cell(1, col++).Value = "Proceso";
                 worksheet.Cell(1, col++).Value = "Estado";
+                worksheet.Cell(1, col++).Value = "Título de la Idea";
                 worksheet.Cell(1, col++).Value = "Resumen de la Idea";
                 worksheet.Cell(1, col++).Value = "Valor Inversión";
                 worksheet.Cell(1, col++).Value = "ROI Meses";
@@ -751,6 +752,7 @@ namespace CalificacionXPuntosWeb.Controllers
                     worksheet.Cell(row, col++).Value = idea.Categoria;
                     worksheet.Cell(row, col++).Value = idea.Proceso;
                     worksheet.Cell(row, col++).Value = idea.Estado;
+                    worksheet.Cell(row, col++).Value = idea.TituloIdea ?? "";
                     worksheet.Cell(row, col++).Value = idea.DescripcionIdea;
                     worksheet.Cell(row, col++).Value = idea.ValorInversion ?? 0;
                     worksheet.Cell(row, col++).Value = idea.RoiMeses ?? "";
@@ -777,6 +779,100 @@ namespace CalificacionXPuntosWeb.Controllers
                     workbook.SaveAs(stream);
                     var content = stream.ToArray();
                     var fileName = $"Calificaciones_{TimeHelper.GetColombiaTime():yyyyMMdd_HHmmss}.xlsx";
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ExportarExcelRedimidos(string filtroDocumento = "", string filtroNombre = "", string filtroPremio = "", 
+            string filtroEstado = "", string filtroFechaDesde = "", string filtroFechaHasta = "")
+        {
+            var authResult = RequiereAutenticacion();
+            if (authResult != null) return authResult;
+
+            var todasLasRedenciones = _redencionService.GetAllRedenciones() ?? new List<Redencion>();
+            var query = todasLasRedenciones.AsQueryable();
+
+            // Aplicar los mismos filtros que en ListadoRedimidos
+            if (!string.IsNullOrWhiteSpace(filtroDocumento))
+            {
+                query = query.Where(r => r.NumeroDocumento.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroNombre))
+            {
+                query = query.Where(r => r.NombreUsuario.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroPremio))
+            {
+                query = query.Where(r => r.NombrePremio.Contains(filtroPremio, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroEstado))
+            {
+                query = query.Where(r => r.Estado == filtroEstado);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroFechaDesde) && DateTime.TryParse(filtroFechaDesde, out var fechaDesde))
+            {
+                query = query.Where(r => r.FechaRedencion.Date >= fechaDesde.Date);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroFechaHasta) && DateTime.TryParse(filtroFechaHasta, out var fechaHasta))
+            {
+                query = query.Where(r => r.FechaRedencion.Date <= fechaHasta.Date);
+            }
+
+            // Ordenar por fecha más reciente primero
+            var redencionesFiltradas = query.OrderByDescending(r => r.FechaRedencion).ToList();
+
+            using (var workbook = new ClosedXML.Excel.XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Redimidos");
+                
+                // Encabezados
+                int col = 1;
+                worksheet.Cell(1, col++).Value = "ID";
+                worksheet.Cell(1, col++).Value = "Documento";
+                worksheet.Cell(1, col++).Value = "Nombre";
+                worksheet.Cell(1, col++).Value = "Premio";
+                worksheet.Cell(1, col++).Value = "Puntos Utilizados";
+                worksheet.Cell(1, col++).Value = "Fecha Redención";
+                worksheet.Cell(1, col++).Value = "Estado";
+                
+                int totalColumns = col - 1;
+                
+                // Estilo de encabezados
+                var headerRange = worksheet.Range(1, 1, 1, totalColumns);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+                
+                // Datos
+                int row = 2;
+                foreach (var redencion in redencionesFiltradas)
+                {
+                    col = 1;
+                    worksheet.Cell(row, col++).Value = redencion.Id;
+                    worksheet.Cell(row, col++).Value = redencion.NumeroDocumento;
+                    worksheet.Cell(row, col++).Value = redencion.NombreUsuario;
+                    worksheet.Cell(row, col++).Value = redencion.NombrePremio;
+                    worksheet.Cell(row, col++).Value = redencion.PuntosUtilizados;
+                    worksheet.Cell(row, col++).Value = TimeHelper.ToColombiaTime(redencion.FechaRedencion).ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cell(row, col++).Value = redencion.Estado;
+                    row++;
+                }
+                
+                // Ajustar ancho de columnas
+                worksheet.Columns().AdjustToContents();
+                
+                // Guardar en memoria
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    var fileName = $"Redimidos_{TimeHelper.GetColombiaTime():yyyyMMdd_HHmmss}.xlsx";
                     return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
             }
@@ -1085,6 +1181,11 @@ namespace CalificacionXPuntosWeb.Controllers
                     return Json(new { success = false, message = "El campo Nombre es obligatorio." });
                 }
 
+                if (string.IsNullOrWhiteSpace(idea.TituloIdea))
+                {
+                    return Json(new { success = false, message = "El campo Título de la Idea es obligatorio." });
+                }
+
                 if (string.IsNullOrWhiteSpace(idea.DescripcionIdea))
                 {
                     return Json(new { success = false, message = "El campo Resumen de la idea es obligatorio." });
@@ -1113,6 +1214,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 // Normalizar campos obligatorios (trim)
                 idea.NumeroDocumento = idea.NumeroDocumento.Trim();
                 idea.NombreUsuario = idea.NombreUsuario.Trim();
+                idea.TituloIdea = idea.TituloIdea.Trim();
                 idea.DescripcionIdea = idea.DescripcionIdea.Trim();
                 idea.Estado = idea.Estado.Trim();
                 idea.Radicado = idea.Radicado.Trim();
