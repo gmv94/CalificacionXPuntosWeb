@@ -7,11 +7,11 @@ html, body {
 
 /* Estilos para pestañas de navegación */
 .nav-tabs {
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 3px solid #dee2e6;
     display: flex;
     flex-wrap: wrap;
     padding-left: 0;
-    margin-bottom: 0;
+    margin-bottom: 1.5rem;
     list-style: none;
 }
 
@@ -20,40 +20,46 @@ html, body {
 }
 
 .nav-tabs .nav-link {
-    color: #495057;
-    border: 1px solid transparent;
-    border-top-left-radius: 0.25rem;
-    border-top-right-radius: 0.25rem;
-    padding: 0.5rem 1rem;
-    margin-bottom: -2px;
-    margin-right: 0;
+    color: #6c757d;
+    border: 2px solid transparent;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    margin-bottom: -3px;
+    margin-right: 0.25rem;
     transition: all 0.3s ease;
     display: block;
     text-decoration: none;
-    background-color: transparent;
-    border-bottom: 2px solid transparent;
+    background-color: #f8f9fa;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
 }
 
 .nav-tabs .nav-link:hover {
-    border-color: #e9ecef #e9ecef #dee2e6;
-    background-color: #f8f9fa;
+    border-color: #dee2e6 #dee2e6 #007bff;
+    background-color: #e9ecef;
     color: #007bff;
-    border-bottom-color: #dee2e6;
+    border-bottom-color: #007bff;
+    transform: translateY(-2px);
 }
 
 .nav-tabs .nav-link.active {
-    color: #495057;
-    background-color: #fff;
-    border-color: #dee2e6 #dee2e6 #fff;
-    border-bottom-color: transparent;
-    font-weight: 600;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff #007bff #fff;
+    border-bottom-color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    box-shadow: 0 -2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .nav-tabs .nav-link.active:hover {
-    color: #495057;
-    background-color: #fff;
-    border-color: #dee2e6 #dee2e6 #fff;
-    border-bottom-color: transparent;
+    color: #fff;
+    background-color: #0056b3;
+    border-color: #0056b3 #0056b3 #fff;
+    border-bottom-color: #fff;
+    transform: translateY(-2px);
 }
 
 /* Layout principal con sidebar */
@@ -118,7 +124,7 @@ main {
 
 .top-row.navbar {
     height: 3.5rem;
-    background-color: #4a8205;
+    background-color: #f7f7f7;
 }
 
 .navbar-brand {
@@ -167,28 +173,205 @@ main {
         display: none;
     }
 
-    .collapse {
-        display: block;
+    .nav-scrollable {
+        display: block !important;
+        max-height: none !important;
+        overflow-y: auto;
+    }
+
+    /* Solo aplicar display block al menú de navegación, no a otros collapse */
+    .nav-scrollable.collapse {
+        display: block !important;
+    }
+    
+    /* Asegurar que los collapse de Bootstrap funcionen correctamente */
+    .collapse:not(.nav-scrollable):not(.show) {
+        display: none !important;
+    }
+    
+    .collapse:not(.nav-scrollable).show {
+        display: block !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Layout móvil */
+    .page {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+    }
+
+    .top-row {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        height: auto;
+        min-height: 3.5rem;
+    }
+
+    .top-row .titulo-principal {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .navbar-toggler {
+        display: block !important;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        padding: 0.25rem 0.5rem;
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* Menú móvil colapsable */
+    .nav-scrollable {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        background: linear-gradient(180deg, #333333 0%, #000000 100%);
+    }
+
+    .nav-scrollable:not(.collapse) {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .nav-scrollable.collapse {
+        max-height: 0;
+    }
+
+    .nav-item {
+        font-size: 0.9rem;
+        padding-bottom: 0.4rem;
+    }
+    
+    .nav-item a {
+        height: 2.75rem;
+        line-height: 2.75rem;
+        padding: 0 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Contenido principal */
+    main {
+        width: 100%;
+    }
+
+    .content {
+        padding: 1rem 0.75rem !important;
+    }
+
+    article {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    /* Tablas responsive */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+
+    .table {
+        min-width: 600px;
+        font-size: 0.85rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        white-space: nowrap;
+    }
+
+    /* Formularios responsive */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem 0.75rem;
+    }
+
+    .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+
+    .row > * {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Forzar columnas a full width en móviles */
+    .col-md-3,
+    .col-md-4,
+    .col-md-6,
+    .col-md-12 {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Botones responsive */
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-group .btn {
+        width: auto;
+    }
+
+    /* Filtros en móviles */
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    /* Títulos más pequeños */
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    h4 {
+        font-size: 1.1rem;
+    }
+
+    h5 {
+        font-size: 1rem;
+    }
+
+    /* Pestañas responsive en móviles */
+    .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        margin-right: 0.15rem;
+    }
+
+    .nav-tabs .nav-link.active {
+        font-size: 0.95rem;
     }
 }
 
 @media (max-width: 640.98px) {
-    .top-row:not(.auth) {
-        display: none;
-    }
-
-    .top-row.auth {
-        justify-content: space-between;
-    }
-
     .top-row a, .top-row .btn-link {
         margin-left: 0;
     }
     
-    /* Menú móvil siempre visible y comprimido */
-    .nav-scrollable {
+    .nav-scrollable:not(.collapse) {
         max-height: 60vh;
-        overflow-y: auto;
     }
     
     .nav-item {
@@ -200,6 +383,15 @@ main {
         height: 2.5rem;
         line-height: 2.5rem;
         padding: 0 0.75rem;
+    }
+
+    .table {
+        font-size: 0.75rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.4rem 0.2rem;
     }
 }
 
@@ -248,5 +440,29 @@ a, .btn-link {
 .bg-light {
     --bs-bg-opacity: 1;
     background-color: rgb(222 222 222) !important;
+}
+
+.ms-1 {
+    margin-left: 0rem !important;
+}
+
+/* Estilos para información del usuario en ConsultarDocumento */
+.info-item {
+    padding: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .info-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .card-body .row:last-child .info-item:last-child {
+        border-bottom: none;
+    }
 }
 

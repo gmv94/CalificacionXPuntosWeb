@@ -171,7 +171,9 @@ namespace CalificacionXPuntosWeb.Controllers
                 return View("RedencionPuntos");
             }
 
-            var puntosUsuario = _ideaService.GetPuntosAcumuladosPorDocumento(numeroDocumento);
+            // Normalizar el número de documento antes de buscar
+            var numeroDocumentoNormalizado = numeroDocumento.Trim();
+            var puntosUsuario = _ideaService.GetPuntosAcumuladosPorDocumento(numeroDocumentoNormalizado);
             
             if (puntosUsuario == null)
             {
@@ -181,7 +183,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 return View("RedencionPuntos");
             }
 
-            var redencionesUsuario = _redencionService.GetRedencionesPorDocumento(numeroDocumento);
+            var redencionesUsuario = _redencionService.GetRedencionesPorDocumento(numeroDocumentoNormalizado);
             var puntosUtilizados = redencionesUsuario?.Sum(r => r.PuntosUtilizados) ?? 0;
             var puntosDisponibles = puntosUsuario.TotalPuntos - puntosUtilizados;
 
@@ -189,16 +191,16 @@ namespace CalificacionXPuntosWeb.Controllers
             ViewBag.RedencionesUsuario = redencionesUsuario;
             ViewBag.PuntosDisponibles = puntosDisponibles;
             ViewBag.PremiosDisponibles = _premioService.GetPremiosDisponibles();
-            ViewBag.NumeroDocumento = numeroDocumento;
+            ViewBag.NumeroDocumento = numeroDocumentoNormalizado;
 
             return View("RedencionPuntos");
         }
 
         [HttpPost]
         [ActionName("RedencionPuntos")]
-        public IActionResult RedencionPuntosPost(string numeroDocumento)
+        public IActionResult RedencionPuntosPost([FromForm] string numeroDocumento)
         {
-            return RedencionPuntosInternal(numeroDocumento);
+            return RedencionPuntosInternal(numeroDocumento ?? "");
         }
 
         [HttpPost]
@@ -264,7 +266,7 @@ namespace CalificacionXPuntosWeb.Controllers
             var authResult = RequiereAutenticacion();
             if (authResult != null) return authResult;
 
-            var rol = HttpContext.Session.GetString("Rol") ?? "";
+            var rol = HttpContext.Session.GetString("rol") ?? "";
             var esSuperAdmin = rol == "SuperAdmin";
             
             if (!esSuperAdmin && rol != "Consulta" && rol != "Usuario")
@@ -407,18 +409,24 @@ namespace CalificacionXPuntosWeb.Controllers
                 return RedirectToAction("TablaPremios");
             }
 
-            // Calcular puntos requeridos
-            var valorPuntos = _valorPuntosService.GetValorPuntosPorCosto(premio.Costo);
-            if (valorPuntos != null && valorPuntos.ValorPorPunto > 0)
+            // Solo calcular puntos requeridos automáticamente si no se proporcionó un valor válido
+            // Si el usuario editó manualmente el campo, respetar ese valor
+            if (premio.PuntosRequeridos <= 0)
             {
-                premio.PuntosRequeridos = (int)Math.Ceiling(premio.Costo / valorPuntos.ValorPorPunto);
+                // Calcular puntos requeridos automáticamente
+                var valorPuntos = _valorPuntosService.GetValorPuntosPorCosto(premio.Costo);
+                if (valorPuntos != null && valorPuntos.ValorPorPunto > 0)
+                {
+                    premio.PuntosRequeridos = (int)Math.Ceiling(premio.Costo / valorPuntos.ValorPorPunto);
+                }
+                else
+                {
+                    TempData["Mensaje"] = "No se encontró un valor por punto configurado para este rango de costo. Configure un valor por punto en Administración > Valor Puntos.";
+                    TempData["TipoMensaje"] = "error";
+                    return RedirectToAction("TablaPremios");
+                }
             }
-            else
-            {
-                TempData["Mensaje"] = "No se encontró un valor por punto configurado para este rango de costo. Configure un valor por punto en Administración > Valor Puntos.";
-                TempData["TipoMensaje"] = "error";
-                return RedirectToAction("TablaPremios");
-            }
+            // Si PuntosRequeridos > 0, significa que el usuario lo editó manualmente, respetar ese valor
 
             try
             {
@@ -618,7 +626,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 (string.IsNullOrEmpty(filtroDocumento) || idea.NumeroDocumento.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase)) &&
                 (string.IsNullOrEmpty(filtroNombre) || idea.NombreUsuario.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase)) &&
                 (string.IsNullOrEmpty(filtroCategoria) || idea.Categoria == filtroCategoria) &&
-                (string.IsNullOrEmpty(filtroProceso) || idea.Proceso.Contains(filtroProceso, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrEmpty(filtroProceso) || (!string.IsNullOrEmpty(idea.Proceso) && idea.Proceso.Contains(filtroProceso, StringComparison.OrdinalIgnoreCase))) &&
                 (string.IsNullOrEmpty(filtroEstado) || idea.Estado == filtroEstado) &&
                 (string.IsNullOrEmpty(filtroRadicado) || idea.Radicado.Contains(filtroRadicado, StringComparison.OrdinalIgnoreCase))
             ).ToList();
@@ -678,7 +686,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 (string.IsNullOrEmpty(filtroDocumento) || idea.NumeroDocumento.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase)) &&
                 (string.IsNullOrEmpty(filtroNombre) || idea.NombreUsuario.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase)) &&
                 (string.IsNullOrEmpty(filtroCategoria) || idea.Categoria == filtroCategoria) &&
-                (string.IsNullOrEmpty(filtroProceso) || idea.Proceso.Contains(filtroProceso, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrEmpty(filtroProceso) || (!string.IsNullOrEmpty(idea.Proceso) && idea.Proceso.Contains(filtroProceso, StringComparison.OrdinalIgnoreCase))) &&
                 (string.IsNullOrEmpty(filtroEstado) || idea.Estado == filtroEstado) &&
                 (string.IsNullOrEmpty(filtroRadicado) || idea.Radicado.Contains(filtroRadicado, StringComparison.OrdinalIgnoreCase))
             ).ToList();
@@ -940,6 +948,40 @@ namespace CalificacionXPuntosWeb.Controllers
             return Json(new { impactos = new List<object>() });
         }
 
+        [HttpGet]
+        public IActionResult GetUsuarioInfo(string numeroDocumento)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(numeroDocumento))
+                {
+                    return Json(new { success = false, message = "Número de documento requerido" });
+                }
+
+                // Buscar la idea más reciente con ese documento para obtener nombre y celular
+                var ideaMasReciente = _ideaService.GetAllIdeas()
+                    .Where(i => i.NumeroDocumento == numeroDocumento)
+                    .OrderByDescending(i => i.FechaRegistro)
+                    .FirstOrDefault();
+
+                if (ideaMasReciente != null)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        nombreUsuario = ideaMasReciente.NombreUsuario ?? string.Empty,
+                        celular = ideaMasReciente.Celular ?? string.Empty
+                    });
+                }
+
+                return Json(new { success = false, message = "No se encontró información para este documento" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
         [HttpPost]
         public IActionResult CalcularPuntos([FromBody] CalcularPuntosRequest request)
         {
@@ -1028,6 +1070,11 @@ namespace CalificacionXPuntosWeb.Controllers
                     return Json(new { success = false, message = "El campo Fecha Radicado es obligatorio." });
                 }
 
+                if (string.IsNullOrWhiteSpace(idea.Proceso))
+                {
+                    return Json(new { success = false, message = "El campo Proceso es obligatorio." });
+                }
+
                 // Normalizar campos obligatorios (trim)
                 idea.NumeroDocumento = idea.NumeroDocumento.Trim();
                 idea.NombreUsuario = idea.NombreUsuario.Trim();
@@ -1038,6 +1085,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 // Convertir cadenas vacías a NULL para campos opcionales
                 idea.Celular = string.IsNullOrWhiteSpace(idea.Celular) ? null : idea.Celular.Trim();
                 idea.Categoria = string.IsNullOrWhiteSpace(idea.Categoria) ? null : idea.Categoria.Trim();
+                // Proceso: validar que no esté vacío (obligatorio en formulario), pero puede ser null en BD para registros antiguos
                 idea.Proceso = string.IsNullOrWhiteSpace(idea.Proceso) ? null : idea.Proceso.Trim();
                 idea.RoiMeses = string.IsNullOrWhiteSpace(idea.RoiMeses) ? null : idea.RoiMeses.Trim();
                 idea.FacilidadImplem = string.IsNullOrWhiteSpace(idea.FacilidadImplem) ? null : idea.FacilidadImplem.Trim();

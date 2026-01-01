@@ -42,7 +42,7 @@ namespace CalificacionXPuntosWeb.Controllers
 
             if (!EsSuperAdmin)
             {
-                TempData["Mensaje"] = "Solo los SuperAdmin pueden acceder a esta sección.";
+                TempData["Mensaje"] = "No tiene permisos para acceder a esta sección.";
                 TempData["TipoMensaje"] = "error";
                 return RedirectToAction("Index", "Home");
             }

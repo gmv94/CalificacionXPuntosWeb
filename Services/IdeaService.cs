@@ -138,7 +138,19 @@ namespace CalificacionXPuntosWeb.Services
         {
             try
             {
-                var ideasUsuario = _context.Ideas.Where(i => i.NumeroDocumento == numeroDocumento).ToList();
+                // Normalizar el número de documento (trim)
+                var numeroDocumentoNormalizado = numeroDocumento?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(numeroDocumentoNormalizado))
+                {
+                    return null;
+                }
+
+                // Obtener todas las ideas y filtrar en memoria para manejar espacios
+                // Esto es necesario porque EF Core no puede traducir Trim() a SQL en todas las versiones
+                var todasLasIdeas = _context.Ideas.ToList();
+                var ideasUsuario = todasLasIdeas
+                    .Where(i => i.NumeroDocumento != null && i.NumeroDocumento.Trim().Equals(numeroDocumentoNormalizado, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
                 if (!ideasUsuario.Any())
                 {
                     // Si no hay ideas pero hay puntos históricos, crear registro

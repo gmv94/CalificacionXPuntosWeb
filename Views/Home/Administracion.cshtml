@@ -24,13 +24,13 @@
         <a class="nav-link @(tabActivo == "procesos" ? "active" : "")" href="/Home/Administracion?tab=procesos">Procesos</a>
     </li>
     <li class="nav-item" role="presentation">
+        <a class="nav-link @(tabActivo == "configuracion-puntos" ? "active" : "")" href="/Home/Administracion?tab=configuracion-puntos">Configuración Puntos</a>
+    </li>
+    <li class="nav-item" role="presentation">
         <a class="nav-link @(tabActivo == "puntos-historicos" ? "active" : "")" href="/Home/Administracion?tab=puntos-historicos">Puntos Históricos</a>
     </li>
     <li class="nav-item" role="presentation">
         <a class="nav-link @(tabActivo == "valor-puntos" ? "active" : "")" href="/Home/Administracion?tab=valor-puntos">Valor Puntos</a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link @(tabActivo == "configuracion-puntos" ? "active" : "")" href="/Home/Administracion?tab=configuracion-puntos">Configuración Puntos</a>
     </li>
     <li class="nav-item" role="presentation">
         <a class="nav-link @(tabActivo == "usuarios" ? "active" : "")" href="/Home/Administracion?tab=usuarios">Gestión de Usuarios</a>
@@ -356,7 +356,7 @@ else if (tabActivo == "configuracion-puntos")
                                     <td>@config.Valor</td>
                                     <td>@config.Porcentaje%</td>
                                     <td>@config.ValorBase.ToString("N0")</td>
-                                    <td>@(config.PorcentajeFijos * 100)%</td>
+                                    <td>@((config.PorcentajeFijos * 100).ToString("N2"))%</td>
                                     <td>@config.Orden</td>
                                     <td>@(config.Activo ? "Activo" : "Inactivo")</td>
                                     <td>

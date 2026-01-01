@@ -41,32 +41,50 @@
                     <h5>Información del Usuario</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <strong>Documento:</strong> @puntosUsuario.NumeroDocumento
+                    <div class="row g-3">
+                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Documento:</strong><br />
+                                <span>@puntosUsuario.NumeroDocumento</span>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Nombre:</strong> @puntosUsuario.NombreUsuario
+                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Nombre:</strong><br />
+                                <span>@puntosUsuario.NombreUsuario</span>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <strong>Total Ideas:</strong> @puntosUsuario.TotalIdeas
+                        <div class="col-12 col-md-2 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Total Ideas:</strong><br />
+                                <span>@puntosUsuario.TotalIdeas</span>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <strong>Puntos Históricos:</strong> @puntosUsuario.PuntosHistoricos
+                        <div class="col-12 col-md-2 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Puntos Históricos:</strong><br />
+                                <span>@puntosUsuario.PuntosHistoricos</span>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <strong>Total Puntos:</strong> 
-                            <span class="badge bg-success fs-6">@puntosUsuario.TotalPuntos</span>
+                        <div class="col-12 col-md-2 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Total Puntos:</strong><br />
+                                <span class="badge bg-success fs-6">@puntosUsuario.TotalPuntos</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-md-3">
-                            <strong>Puntos Disponibles:</strong> 
-                            <span class="badge bg-info fs-6">@puntosDisponibles</span>
+                    <div class="row g-3 mt-2 mt-md-3">
+                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Puntos Disponibles:</strong><br />
+                                <span class="badge bg-info fs-6">@puntosDisponibles</span>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Puntos Utilizados:</strong> 
-                            <span class="badge bg-warning fs-6">@puntosUtilizados</span>
+                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                            <div class="info-item">
+                                <strong>Puntos Utilizados:</strong><br />
+                                <span class="badge bg-warning fs-6">@puntosUtilizados</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,8 +132,8 @@
                                             <td>
                                                 @if (!string.IsNullOrEmpty(idea.Observaciones))
                                                 {
-                                                    <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#@observacionesId" aria-expanded="false" aria-controls="@observacionesId">
-                                                        <i class="bi bi-chevron-down"></i> Ver
+                                                    <button class="btn btn-sm btn-link p-0 observaciones-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#@observacionesId" aria-expanded="false" aria-controls="@observacionesId">
+                                                        <i class="bi bi-chevron-down toggle-icon"></i> <span class="toggle-text">Ver</span>
                                                     </button>
                                                     <div class="collapse" id="@observacionesId">
                                                         <div class="mt-2 p-2 bg-light border rounded">
@@ -224,6 +242,52 @@
         @ViewBag.Mensaje
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+}
+
+@section Scripts {
+    <script>
+        // Inicializar collapse de observaciones
+        document.addEventListener('DOMContentLoaded', function() {
+            // Asegurar que todos los collapse estén ocultos por defecto
+            document.querySelectorAll('.collapse[id^="obs_"]').forEach(function(collapse) {
+                collapse.classList.remove('show');
+            });
+
+            // Agregar event listeners para cambiar el ícono y texto
+            document.querySelectorAll('[data-bs-toggle="collapse"][data-bs-target^="#obs_"]').forEach(function(button) {
+                const targetId = button.getAttribute('data-bs-target');
+                const collapseElement = document.querySelector(targetId);
+                
+                if (collapseElement) {
+                    collapseElement.addEventListener('show.bs.collapse', function() {
+                        const icon = button.querySelector('.toggle-icon');
+                        const text = button.querySelector('.toggle-text');
+                        if (icon) {
+                            icon.classList.remove('bi-chevron-down');
+                            icon.classList.add('bi-chevron-up');
+                        }
+                        if (text) {
+                            text.textContent = 'Ocultar';
+                        }
+                        button.setAttribute('aria-expanded', 'true');
+                    });
+
+                    collapseElement.addEventListener('hide.bs.collapse', function() {
+                        const icon = button.querySelector('.toggle-icon');
+                        const text = button.querySelector('.toggle-text');
+                        if (icon) {
+                            icon.classList.remove('bi-chevron-up');
+                            icon.classList.add('bi-chevron-down');
+                        }
+                        if (text) {
+                            text.textContent = 'Ver';
+                        }
+                        button.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        });
+    </script>
 }
 
 

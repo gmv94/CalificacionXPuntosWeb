@@ -18,20 +18,20 @@
     </div>
     <div class="card-body">
         <form method="get" action="/Home/ListadoRedimidos">
-            <div class="row">
-                <div class="col-md-3">
+            <div class="row g-2">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Número Documento:</label>
                     <input type="text" class="form-control" name="filtroDocumento" value="@ViewBag.FiltroDocumento" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Nombre Usuario:</label>
                     <input type="text" class="form-control" name="filtroNombre" value="@ViewBag.FiltroNombre" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Premio:</label>
                     <input type="text" class="form-control" name="filtroPremio" value="@ViewBag.FiltroPremio" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Estado:</label>
                     <select class="form-select" name="filtroEstado">
                         <option value="">Todos</option>
@@ -40,18 +40,20 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-md-3">
+            <div class="row g-2 mt-2">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Fecha Desde:</label>
                     <input type="date" class="form-control" name="filtroFechaDesde" value="@ViewBag.FiltroFechaDesde" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Fecha Hasta:</label>
                     <input type="date" class="form-control" name="filtroFechaHasta" value="@ViewBag.FiltroFechaHasta" />
                 </div>
-                <div class="col-md-6">
-                    <button type="submit" class="btn btn-primary mt-4">Filtrar</button>
-                    <a href="/Home/ListadoRedimidos" class="btn btn-secondary mt-4">Limpiar Filtros</a>
+                <div class="col-12 col-md-12 col-lg-6">
+                    <div class="d-flex flex-column flex-md-row gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                        <a href="/Home/ListadoRedimidos" class="btn btn-secondary">Limpiar Filtros</a>
+                    </div>
                 </div>
             </div>
         </form>

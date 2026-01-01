@@ -5,17 +5,17 @@
 }
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <img src="~/img/Logo.png" alt="Logo" style="height: 40px;" />
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <img src="~/img/Logo.png" alt="Logo" style="height: 35px; max-height: 35px;" />
         </a>
-        <button title="Navigation menu" class="navbar-toggler" onclick="toggleNavMenu()">
+        <button title="Navigation menu" class="navbar-toggler" type="button" onclick="toggleNavMenu()" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
 
-<div class="nav-scrollable" id="navMenu">
+<div class="nav-scrollable collapse" id="navMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <a class="nav-link @(Context.Request.Path == "/" || Context.Request.Path == "/Home" || Context.Request.Path == "/Home/Index" ? "active" : "")" href="/">
@@ -43,11 +43,6 @@
                 </a>
             </div>
             <div class="nav-item px-3">
-                <a class="nav-link @(Context.Request.Path.Value?.Contains("/ListadoRedimidos") == true ? "active" : "")" href="/Home/ListadoRedimidos">
-                    <span aria-hidden="true"></span> Listado Redimidos
-                </a>
-            </div>
-            <div class="nav-item px-3">
                 <a class="nav-link @(Context.Request.Path.Value?.Contains("/PuntosAcumulados") == true ? "active" : "")" href="/Home/PuntosAcumulados">
                     <span aria-hidden="true"></span> Puntos Acumulados
                 </a>
@@ -55,6 +50,11 @@
             <div class="nav-item px-3">
                 <a class="nav-link @(Context.Request.Path.Value?.Contains("/RedencionPuntos") == true ? "active" : "")" href="/Home/RedencionPuntos">
                     <span aria-hidden="true"></span> Redención Puntos
+                </a>
+            </div>
+            <div class="nav-item px-3">
+                <a class="nav-link @(Context.Request.Path.Value?.Contains("/ListadoRedimidos") == true ? "active" : "")" href="/Home/ListadoRedimidos">
+                    <span aria-hidden="true"></span> Listado Redimidos
                 </a>
             </div>
             <div class="nav-item px-3">
@@ -103,16 +103,69 @@
 <script>
     function toggleNavMenu() {
         const navMenu = document.getElementById('navMenu');
+        const button = document.querySelector('.navbar-toggler');
         if (navMenu) {
-            navMenu.classList.toggle('collapse');
+            const isCollapsed = navMenu.classList.contains('collapse');
+            if (isCollapsed) {
+                navMenu.classList.remove('collapse');
+                if (button) {
+                    button.setAttribute('aria-expanded', 'true');
+                }
+            } else {
+                navMenu.classList.add('collapse');
+                if (button) {
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            }
         }
     }
 
     function collapseNavMenu() {
         const navMenu = document.getElementById('navMenu');
+        const button = document.querySelector('.navbar-toggler');
         if (navMenu) {
             navMenu.classList.add('collapse');
+            if (button) {
+                button.setAttribute('aria-expanded', 'false');
+            }
         }
     }
+
+    // Cerrar menú al hacer clic fuera o en un enlace (solo en móvil)
+    document.addEventListener('DOMContentLoaded', function() {
+        const navMenu = document.getElementById('navMenu');
+        
+        // En escritorio, asegurar que el menú esté visible
+        if (window.innerWidth > 768) {
+            if (navMenu) {
+                navMenu.classList.remove('collapse');
+            }
+        } else {
+            // En móvil, asegurar que el menú esté oculto
+            if (navMenu) {
+                navMenu.classList.add('collapse');
+            }
+        }
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    collapseNavMenu();
+                }
+            });
+        });
+
+        // Manejar cambios de tamaño de ventana
+        window.addEventListener('resize', function() {
+            if (navMenu) {
+                if (window.innerWidth > 768) {
+                    navMenu.classList.remove('collapse');
+                } else {
+                    navMenu.classList.add('collapse');
+                }
+            }
+        });
+    });
 </script>
 

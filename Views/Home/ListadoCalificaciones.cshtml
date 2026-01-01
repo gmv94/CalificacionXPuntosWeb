@@ -16,16 +16,16 @@
     </div>
     <div class="card-body">
         <form method="get" action="/Home/ListadoCalificaciones">
-            <div class="row">
-                <div class="col-md-3">
+            <div class="row g-2">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Número Documento:</label>
                     <input type="text" class="form-control" name="filtroDocumento" value="@ViewBag.FiltroDocumento" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Nombre Usuario:</label>
                     <input type="text" class="form-control" name="filtroNombre" value="@ViewBag.FiltroNombre" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Categoría:</label>
                     <select class="form-select" name="filtroCategoria">
                         <option value="">Todas</option>
@@ -35,13 +35,19 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Proceso:</label>
-                    <input type="text" class="form-control" name="filtroProceso" value="@ViewBag.FiltroProceso" />
+                    <select class="form-select" name="filtroProceso">
+                        <option value="">Todos</option>
+                        @foreach (var proc in procesos ?? new List<string>())
+                        {
+                            <option value="@proc" selected="@(ViewBag.FiltroProceso == proc)">@proc</option>
+                        }
+                    </select>
                 </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-md-3">
+            <div class="row g-2 mt-2">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Estado:</label>
                     <select class="form-select" name="filtroEstado">
                         <option value="">Todos</option>
@@ -51,22 +57,22 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Radicado:</label>
                     <input type="text" class="form-control" name="filtroRadicado" value="@ViewBag.FiltroRadicado" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Fecha Desde:</label>
                     <input type="date" class="form-control" name="filtroFechaDesde" value="@ViewBag.FiltroFechaDesde" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Fecha Hasta:</label>
                     <input type="date" class="form-control" name="filtroFechaHasta" value="@ViewBag.FiltroFechaHasta" />
                 </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-md-12">
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0">Filtrar</button>
                     <a href="/Home/ListadoCalificaciones" class="btn btn-secondary">Limpiar Filtros</a>
                 </div>
             </div>
@@ -93,7 +99,7 @@
                 <th>Detalle</th>
                 @if (ViewBag.EsSuperAdmin == true)
                 {
-                    <th>Acciones</th>
+                    <th></th>
                 }
             </tr>
         </thead>
@@ -108,7 +114,7 @@
                         <td>@idea.NombreUsuario</td>
                         <td>@idea.Celular</td>
                         <td>@idea.Categoria</td>
-                        <td>@idea.Proceso</td>
+                        <td>@(idea.Proceso ?? "")</td>
                         <td>@idea.Estado</td>
                         <td>@idea.Radicado</td>
                             <td>@(idea.FechaRadicado != default(DateTime) ? idea.FechaRadicado.ToString("dd/MM/yyyy") : "")</td>

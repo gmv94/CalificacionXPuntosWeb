@@ -47,27 +47,26 @@ else if (modo == "editar")
                     <h5 class="mb-0">Información Básica</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="numeroDocumento" class="form-label">Documento: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="numeroDocumento" name="NumeroDocumento" value="@idea?.NumeroDocumento" maxlength="50" @(esModoVer ? "readonly" : "required") />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label for="nombreUsuario" class="form-label">Nombre: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nombreUsuario" name="NombreUsuario" value="@idea?.NombreUsuario" maxlength="200" @(esModoVer ? "readonly" : "required") />
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="celular" class="form-label">Celular:</label>
                             <input type="text" class="form-control" id="celular" name="Celular" value="@idea?.Celular" placeholder="Ej: 3001234567" maxlength="20" @(esModoVer ? "readonly" : "") />
                         </div>
-                        <div class="col-md-6">
-                            <label for="proceso" class="form-label">Proceso:</label>
-                            <select class="form-select" id="proceso" name="Proceso" @(esModoVer ? "disabled" : "")>
+                        <div class="col-12 col-md-6">
+                            <label for="proceso" class="form-label">Proceso: <span class="text-danger">*</span></label>
+                            <select class="form-select" id="proceso" name="Proceso" @(esModoVer ? "disabled" : "") required>
                                 <option value="">Seleccione...</option>
-                                <option value="N/A">N/A</option>
                                 @foreach (var proc in procesos)
                                 {
                                     @if (idea?.Proceso == proc)
@@ -83,8 +82,8 @@ else if (modo == "editar")
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="categoria" class="form-label">Categoría:</label>
                             <select class="form-select" id="categoria" name="Categoria" @(esModoVer ? "disabled" : "") onchange="onCategoriaChanged()">
                                 <option value="">Seleccione...</option>
@@ -101,7 +100,7 @@ else if (modo == "editar")
                                 }
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label for="estado" class="form-label">Estado: <span class="text-danger">*</span></label>
                             <select class="form-select" id="estado" name="Estado" @(esModoVer ? "disabled" : "required")>
                                 <option value="">Seleccione...</option>
@@ -120,12 +119,12 @@ else if (modo == "editar")
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="radicado" class="form-label">Radicado: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="radicado" name="Radicado" value="@idea?.Radicado" maxlength="50" @(esModoVer ? "readonly" : "required") />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label for="fechaRadicado" class="form-label">Fecha Radicado: <span class="text-danger">*</span></label>
                             @{
                                 var fechaRadicadoValue = "";
@@ -138,8 +137,8 @@ else if (modo == "editar")
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-12">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
                             <label for="descripcionIdea" class="form-label">Resumen de la idea: <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="descripcionIdea" name="DescripcionIdea" rows="4" maxlength="4000" @(esModoVer ? "readonly" : "required")>@idea?.DescripcionIdea</textarea>
                             <small class="text-muted"><span id="contadorDescripcion">@(idea?.DescripcionIdea?.Length ?? 0)</span> / 4000 caracteres</small>
@@ -154,13 +153,13 @@ else if (modo == "editar")
                     <h5 class="mb-0">Calificación de la Idea</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="valorInversion" class="form-label">Valor Inversión:</label>
                             <input type="text" class="form-control" id="valorInversion" value="@(idea?.ValorInversion?.ToString("N0") ?? "")" @(esModoVer ? "readonly" : "") oninput="onValorInversionInput()" />
                             <input type="hidden" id="valorInversionHidden" name="ValorInversion" value="@(idea?.ValorInversion ?? 0)" />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label for="facilidadImplem" class="form-label">Facilidad Implem.:</label>
                             <select class="form-select" id="facilidadImplem" name="FacilidadImplem" @(esModoVer ? "disabled" : "") onchange="recalcularPuntos()">
                                 <option value="">Seleccione...</option>
@@ -179,8 +178,8 @@ else if (modo == "editar")
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="roiMeses" class="form-label">ROI (MESES):</label>
                             <select class="form-select" id="roiMeses" name="RoiMeses" @(esModoVer ? "disabled" : "") onchange="recalcularPuntos()">
                                 <option value="">Seleccione...</option>
@@ -218,12 +217,12 @@ else if (modo == "editar")
                     <h5 class="mb-0">Puntos Extra</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
                             <label for="puntosExtra" class="form-label">Puntos Extra:</label>
                             <input type="number" class="form-control" id="puntosExtra" name="PuntosExtra" value="@(idea?.PuntosExtra?.ToString() ?? "")" min="0" @(esModoVer ? "readonly" : "") onchange="recalcularPuntos()" />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label for="comentariosPuntosExtra" class="form-label">Comentarios Puntos Extra:</label>
                             <textarea class="form-control" id="comentariosPuntosExtra" name="ComentariosPuntosExtra" rows="3" maxlength="4000" @(esModoVer ? "readonly" : "")>@idea?.ComentariosPuntosExtra</textarea>
                             <small class="text-muted"><span id="contadorComentarios">@(idea?.ComentariosPuntosExtra?.Length ?? 0)</span> / 4000 caracteres</small>
@@ -238,8 +237,8 @@ else if (modo == "editar")
                     <h5 class="mb-0">Observaciones</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-12">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
                             <label for="observaciones" class="form-label">Observaciones:</label>
                             <textarea class="form-control" id="observaciones" name="Observaciones" rows="3" maxlength="4000" @(esModoVer ? "readonly" : "")>@idea?.Observaciones</textarea>
                             <small class="text-muted"><span id="contadorObservaciones">@(idea?.Observaciones?.Length ?? 0)</span> / 4000 caracteres</small>
@@ -255,24 +254,24 @@ else if (modo == "editar")
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <strong>Valor Inversión:</strong> <span id="puntosValorInversion">@((int)Math.Round(idea?.PuntosValorInversion ?? 0))</span>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <strong>ROI:</strong> <span id="puntosROI">@((int)Math.Round(idea?.PuntosROI ?? 0))</span>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <strong>Facilidad Implem.:</strong> <span id="puntosFacilidadImplem">@((int)Math.Round(idea?.PuntosFacilidadImplem ?? 0))</span>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <strong>Impacto:</strong> <span id="puntosImpacto">@((int)Math.Round(idea?.PuntosImpacto ?? 0))</span>
                         </div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <strong>Puntos Extra:</strong> <span id="puntosExtraDisplay">@((int)Math.Round(idea?.PuntosExtra ?? 0))</span>
                         </div>
-                        <div class="col-md-9">
+                        <div class="col-12 col-md-6 col-lg-9">
                             <h4><strong>Total: <span id="puntosTotales">@((int)Math.Round(idea?.PuntosTotales ?? 0))</span> puntos</strong></h4>
                         </div>
                     </div>
@@ -339,7 +338,7 @@ else if (modo == "editar")
                 const valor = impactosActuales[impacto.nombre] || 0;
                 const errorClass = valor > impacto.porcentajeMaximo ? 'border-danger' : '';
                 html += `
-                    <div class="col-md-4 mb-2">
+                    <div class="col-12 col-md-6 col-lg-4 mb-2">
                         <label class="form-label">${impacto.nombre} (${impacto.porcentajeMaximo}%):</label>
                         <input type="number" 
                                class="form-control ${errorClass}" 
@@ -467,6 +466,39 @@ else if (modo == "editar")
         }
 
         // Calcular puntos iniciales
+        // Autocompletar Nombre y Celular cuando cambie el Documento
+        document.getElementById('numeroDocumento')?.addEventListener('blur', async function() {
+            const numeroDocumento = this.value?.trim();
+            const nombreUsuarioInput = document.getElementById('nombreUsuario');
+            const celularInput = document.getElementById('celular');
+            
+            // Solo autocompletar si el documento tiene valor y los campos están vacíos o si estamos en modo crear
+            if (numeroDocumento && nombreUsuarioInput && celularInput) {
+                // Solo autocompletar si los campos están vacíos o si el usuario quiere actualizar
+                const nombreActual = nombreUsuarioInput.value?.trim();
+                const celularActual = celularInput.value?.trim();
+                
+                // Si ambos campos están vacíos, intentar autocompletar
+                if (!nombreActual && !celularActual) {
+                    try {
+                        const response = await fetch(`/Home/GetUsuarioInfo?numeroDocumento=${encodeURIComponent(numeroDocumento)}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            if (data.nombreUsuario && !nombreUsuarioInput.value) {
+                                nombreUsuarioInput.value = data.nombreUsuario;
+                            }
+                            if (data.celular && !celularInput.value) {
+                                celularInput.value = data.celular;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener información del usuario:', error);
+                    }
+                }
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', function() {
             recalcularPuntos();
         });
@@ -538,6 +570,17 @@ else if (modo == "editar")
                     icon: 'error',
                     title: 'Error de validación',
                     text: 'El campo Fecha Radicado es obligatorio.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            const proceso = document.getElementById('proceso')?.value?.trim();
+            if (!proceso) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'El campo Proceso es obligatorio.',
                     confirmButtonText: 'Aceptar'
                 });
                 return;
