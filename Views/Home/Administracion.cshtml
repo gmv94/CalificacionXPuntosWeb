@@ -413,8 +413,8 @@ else if (tabActivo == "usuarios")
                                     <td>@usuario.NombreUsuario</td>
                                     <td>@usuario.Rol</td>
                                     <td>@(usuario.Activo ? "Activo" : "Bloqueado")</td>
-                                    <td>@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
-                                    <td>@(usuario.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+                                    <td>@TimeHelper.ToColombiaTime(usuario.FechaCreacion).ToString("dd/MM/yyyy")</td>
+                                    <td>@(usuario.UltimoAcceso.HasValue ? TimeHelper.ToColombiaTime(usuario.UltimoAcceso.Value).ToString("dd/MM/yyyy HH:mm") : "Nunca")</td>
                                     <td>
                                         <a href="/Home/Administracion?tab=usuarios&accion=editar&id=@usuario.Id" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Editar
@@ -1067,5 +1067,56 @@ else if (tabActivo == "logs")
                 this.submit();
             }
         });
+    });
+
+    // Autocompletar documento cuando se seleccione un nombre de usuario en Puntos Históricos
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscarUsuarioInput = document.getElementById('buscarUsuario');
+        const numeroDocumentoInput = document.getElementById('numeroDocumento');
+        
+        if (buscarUsuarioInput && numeroDocumentoInput) {
+            buscarUsuarioInput.addEventListener('change', async function() {
+                const nombreUsuario = this.value?.trim();
+                const documentoActual = numeroDocumentoInput.value?.trim();
+                
+                // Solo buscar si hay un nombre y el campo de documento está vacío
+                if (nombreUsuario && !documentoActual) {
+                    try {
+                        const response = await fetch(`/Home/GetDocumentoPorNombre?nombreUsuario=${encodeURIComponent(nombreUsuario)}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.numeroDocumento) {
+                            numeroDocumentoInput.value = data.numeroDocumento;
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener documento del usuario:', error);
+                    }
+                }
+            });
+            
+            // También escuchar el evento input para cuando se escribe manualmente
+            buscarUsuarioInput.addEventListener('input', async function() {
+                const nombreUsuario = this.value?.trim();
+                const documentoActual = numeroDocumentoInput.value?.trim();
+                
+                // Si el usuario está escribiendo y el campo de documento está vacío, buscar
+                if (nombreUsuario && nombreUsuario.length > 2 && !documentoActual) {
+                    // Esperar un poco para que el usuario termine de escribir
+                    clearTimeout(buscarUsuarioInput.searchTimeout);
+                    buscarUsuarioInput.searchTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetch(`/Home/GetDocumentoPorNombre?nombreUsuario=${encodeURIComponent(nombreUsuario)}`);
+                            const data = await response.json();
+                            
+                            if (data.success && data.numeroDocumento && !numeroDocumentoInput.value) {
+                                numeroDocumentoInput.value = data.numeroDocumento;
+                            }
+                        } catch (error) {
+                            console.error('Error al obtener documento del usuario:', error);
+                        }
+                    }, 500); // Esperar 500ms después de que el usuario deje de escribir
+                }
+            });
+        }
     });
 </script>

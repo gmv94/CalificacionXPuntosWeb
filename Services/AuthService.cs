@@ -33,7 +33,7 @@ namespace CalificacionXPuntosWeb.Services
 
                 if (VerificarContrasena(contrasena, usuario.ContrasenaHash))
                 {
-                    usuario.UltimoAcceso = TimeHelper.GetColombiaTime();
+                    usuario.UltimoAcceso = DateTime.UtcNow;
                     _context.SaveChanges();
                     
                     // Registrar log de inicio de sesión
@@ -62,7 +62,7 @@ namespace CalificacionXPuntosWeb.Services
                 }
 
                 usuario.ContrasenaHash = HashContrasena(contrasena);
-                usuario.FechaCreacion = TimeHelper.GetColombiaTime();
+                usuario.FechaCreacion = DateTime.UtcNow;
                 _context.Usuarios.Add(usuario);
                 _context.SaveChanges();
                 

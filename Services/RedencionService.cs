@@ -105,7 +105,7 @@ namespace CalificacionXPuntosWeb.Services
                 PremioId = premioId,
                 NombrePremio = premio.Nombre,
                 PuntosUtilizados = premio.PuntosRequeridos,
-                FechaRedencion = TimeHelper.GetColombiaTime(),
+                FechaRedencion = DateTime.UtcNow,
                 Estado = "Redimido"
             };
 

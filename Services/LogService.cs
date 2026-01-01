@@ -24,7 +24,7 @@ namespace CalificacionXPuntosWeb.Services
                     EntidadId = entidadId,
                     Usuario = usuario,
                     Descripcion = descripcion,
-                    Fecha = TimeHelper.GetColombiaTime(),
+                    Fecha = DateTime.UtcNow,
                     Detalles = detalles
                 };
                 _context.Logs.Add(log);

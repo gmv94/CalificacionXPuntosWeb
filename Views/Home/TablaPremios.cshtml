@@ -1,3 +1,4 @@
+@using CalificacionXPuntosWeb.Services
 @{
     ViewData["Title"] = "Tabla de Premios";
     var premios = ViewBag.Premios as List<CalificacionXPuntosWeb.Models.Premio>;
@@ -49,7 +50,7 @@
                             <span class="badge bg-secondary">Inactivo</span>
                         }
                     </td>
-                    <td>@premio.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                    <td>@TimeHelper.ToColombiaTime(premio.FechaCreacion).ToString("dd/MM/yyyy")</td>
                     <td>
                         @if (ViewBag.EsSuperAdmin == true)
                         {

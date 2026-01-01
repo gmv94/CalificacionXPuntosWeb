@@ -60,7 +60,7 @@ namespace CalificacionXPuntosWeb.Services
         {
             try
             {
-                puntosHistoricos.FechaRegistro = DateTime.Now;
+                puntosHistoricos.FechaRegistro = DateTime.UtcNow;
                 _context.PuntosHistoricos.Add(puntosHistoricos);
                 _context.SaveChanges();
             }

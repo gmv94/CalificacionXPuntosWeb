@@ -960,7 +960,7 @@ namespace CalificacionXPuntosWeb.Controllers
 
                 // Buscar la idea más reciente con ese documento para obtener nombre y celular
                 var ideaMasReciente = _ideaService.GetAllIdeas()
-                    .Where(i => i.NumeroDocumento == numeroDocumento)
+                    .Where(i => i.NumeroDocumento != null && i.NumeroDocumento.Trim().Equals(numeroDocumento.Trim(), StringComparison.OrdinalIgnoreCase))
                     .OrderByDescending(i => i.FechaRegistro)
                     .FirstOrDefault();
 
@@ -975,6 +975,41 @@ namespace CalificacionXPuntosWeb.Controllers
                 }
 
                 return Json(new { success = false, message = "No se encontró información para este documento" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetDocumentoPorNombre(string nombreUsuario)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(nombreUsuario))
+                {
+                    return Json(new { success = false, message = "Nombre de usuario requerido" });
+                }
+
+                // Buscar la idea más reciente con ese nombre de usuario para obtener el documento
+                var nombreUsuarioNormalizado = nombreUsuario.Trim();
+                var todasLasIdeas = _ideaService.GetAllIdeas();
+                var ideaMasReciente = todasLasIdeas
+                    .Where(i => i.NombreUsuario != null && i.NombreUsuario.Trim().Equals(nombreUsuarioNormalizado, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(i => i.FechaRegistro)
+                    .FirstOrDefault();
+
+                if (ideaMasReciente != null)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        numeroDocumento = ideaMasReciente.NumeroDocumento ?? string.Empty
+                    });
+                }
+
+                return Json(new { success = false, message = "No se encontró documento para este usuario" });
             }
             catch (Exception ex)
             {
@@ -1095,7 +1130,7 @@ namespace CalificacionXPuntosWeb.Controllers
                 // Asegurar que FechaRegistro esté establecido si no viene
                 if (idea.FechaRegistro == default(DateTime))
                 {
-                    idea.FechaRegistro = TimeHelper.GetColombiaTime();
+                    idea.FechaRegistro = DateTime.UtcNow;
                 }
 
                 // Cargar categoría para calcular puntos si existe

@@ -44,7 +44,7 @@ namespace CalificacionXPuntosWeb.Services
                 // Asegurar que FechaCreacion tenga un valor
                 if (premio.FechaCreacion == default(DateTime))
                 {
-                    premio.FechaCreacion = TimeHelper.GetColombiaTime();
+                    premio.FechaCreacion = DateTime.UtcNow;
                 }
                 
                 // Asegurar valores por defecto
@@ -77,7 +77,7 @@ namespace CalificacionXPuntosWeb.Services
                     PuntosRequeridos = premio.PuntosRequeridos,
                     Stock = premio.Stock,
                     Activo = premio.Activo,
-                    FechaCreacion = premio.FechaCreacion == default(DateTime) ? TimeHelper.GetColombiaTime() : premio.FechaCreacion
+                    FechaCreacion = premio.FechaCreacion == default(DateTime) ? DateTime.UtcNow : premio.FechaCreacion
                 };
                 
                 _context.Premios.Add(premioParaGuardar);
