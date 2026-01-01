@@ -94,17 +94,24 @@
                                             <td>@premio.PuntosRequeridos</td>
                                             <td>@premio.Stock</td>
                                             <td>
-                                                @if (puntosDisponibles >= premio.PuntosRequeridos)
+                                                @if (ViewBag.EsSuperAdmin == true)
                                                 {
-                                                    <form method="post" action="/Home/RedimirPremio" style="display:inline;">
-                                                        <input type="hidden" name="numeroDocumento" value="@numeroDocumento" />
-                                                        <input type="hidden" name="premioId" value="@premio.Id" />
-                                                        <button type="submit" class="btn btn-sm btn-success">Redimir</button>
-                                                    </form>
+                                                    @if (puntosDisponibles >= premio.PuntosRequeridos)
+                                                    {
+                                                        <form method="post" action="/Home/RedimirPremio" style="display:inline;">
+                                                            <input type="hidden" name="numeroDocumento" value="@numeroDocumento" />
+                                                            <input type="hidden" name="premioId" value="@premio.Id" />
+                                                            <button type="submit" class="btn btn-sm btn-success">Redimir</button>
+                                                        </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-danger">Puntos insuficientes</span>
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-danger">Puntos insuficientes</span>
+                                                    <span class="text-muted">Solo consulta</span>
                                                 }
                                             </td>
                                         </tr>

@@ -187,11 +187,15 @@ namespace CalificacionXPuntosWeb.Controllers
             var puntosUtilizados = redencionesUsuario?.Sum(r => r.PuntosUtilizados) ?? 0;
             var puntosDisponibles = puntosUsuario.TotalPuntos - puntosUtilizados;
 
+            var rol = HttpContext.Session.GetString("rol") ?? "";
+            var esSuperAdmin = rol == "SuperAdmin";
+
             ViewBag.PuntosUsuario = puntosUsuario;
             ViewBag.RedencionesUsuario = redencionesUsuario;
             ViewBag.PuntosDisponibles = puntosDisponibles;
             ViewBag.PremiosDisponibles = _premioService.GetPremiosDisponibles();
             ViewBag.NumeroDocumento = numeroDocumentoNormalizado;
+            ViewBag.EsSuperAdmin = esSuperAdmin;
 
             return View("RedencionPuntos");
         }
@@ -206,7 +210,7 @@ namespace CalificacionXPuntosWeb.Controllers
         [HttpPost]
         public IActionResult RedimirPremio(string numeroDocumento, int premioId)
         {
-            var authResult = RequiereAutenticacion();
+            var authResult = RequiereSuperAdmin();
             if (authResult != null) return authResult;
 
             var resultado = _redencionService.RedimirPremio(numeroDocumento, premioId);
